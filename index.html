@@ -66,6 +66,7 @@ body{
 .ibg-key:active{transform:scale(.96)}
 .ibg-feed{min-height:24px;text-align:center;font-weight:700;font-size:14px;margin-top:10px;line-height:1.4}
 .ibg-feed.ok{color:var(--ibg-ok)}.ibg-feed.no{color:var(--ibg-bad)}.ibg-feed.hint{color:var(--hatch-widget-muted)}
+.ibg-credit{text-align:center;color:var(--hatch-widget-muted);font-size:12px;margin-top:16px}
 .ibg-streak{display:inline-block;background:var(--hatch-widget-surface-muted);border:1px solid var(--hatch-widget-border);border-radius:99px;padding:3px 12px;font-size:12px;font-weight:700;color:var(--hatch-widget-text)}
 .ibg-big{font-size:50px;font-weight:800;text-align:center;margin:6px 0}
 .ibg-msg{text-align:center;color:var(--hatch-widget-muted);font-size:14px;margin:0 0 4px;line-height:1.5}
@@ -177,6 +178,7 @@ function menuHTML(){
   h+=diffs.map(function(d){return '<button class="ibg-opt'+(S.diff===d[0]?" sel":"")+'" data-act="diff" data-v="'+d[0]+'">'+d[1]+"</button>";}).join("");
   h+='</div><button class="ibg-btn" data-act="start">Mulai Bermain</button>';
   if(S.best>0)h+='<p class="ibg-sub" style="margin:12px 0 0">Skor terbaikmu: <b>'+S.best+"</b></p>";
+  h+='<p class="ibg-credit">Dibuat oleh Setiyo Budi</p>';
   return h;
 }
 function gameHTML(){
