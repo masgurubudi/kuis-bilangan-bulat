@@ -67,6 +67,12 @@ body{
 .ibg-feed{min-height:24px;text-align:center;font-weight:700;font-size:14px;margin-top:10px;line-height:1.4}
 .ibg-feed.ok{color:var(--ibg-ok)}.ibg-feed.no{color:var(--ibg-bad)}.ibg-feed.hint{color:var(--hatch-widget-muted)}
 .ibg-credit{text-align:center;color:var(--hatch-widget-muted);font-size:12px;margin-top:16px}
+.ibg-nameinput{width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid var(--hatch-widget-border);background:var(--hatch-widget-surface-muted);color:var(--hatch-widget-text);font-size:15px;font-weight:600;margin-top:2px}
+.ibg-nameinput:focus{outline:2px solid var(--hatch-widget-focus);outline-offset:1px;border-color:var(--hatch-widget-accent)}
+.ibg-resultcard{background:linear-gradient(135deg,var(--hatch-widget-accent),#7c3aed);border-radius:16px;padding:22px 16px;text-align:center;margin:14px 0;box-shadow:0 6px 20px var(--hatch-widget-shadow)}
+.ibg-rlabel{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.78)}
+.ibg-rname{font-size:30px;font-weight:800;color:#fff;margin:2px 0 12px;word-break:break-word}
+.ibg-rscore{font-size:64px;font-weight:800;color:#fff;line-height:1.1;text-shadow:0 2px 10px rgba(0,0,0,.28)}
 .ibg-streak{display:inline-block;background:var(--hatch-widget-surface-muted);border:1px solid var(--hatch-widget-border);border-radius:99px;padding:3px 12px;font-size:12px;font-weight:700;color:var(--hatch-widget-text)}
 .ibg-big{font-size:50px;font-weight:800;text-align:center;margin:6px 0}
 .ibg-msg{text-align:center;color:var(--hatch-widget-muted);font-size:14px;margin:0 0 4px;line-height:1.5}
@@ -97,8 +103,9 @@ var store=(function(){
 var TOTAL_Q=10, TIME_PER_Q=20;
 var DIFFS={mudah:{range:10,mult:6},sedang:{range:25,mult:9},sulit:{range:50,mult:12}};
 var OP_OF={tambah:"+",kurang:"\u2212",kali:"\u00D7",bagi:"\u00F7"};
-function defaults(){return{screen:"menu",mode:"campuran",diff:"mudah",qi:0,score:0,streak:0,bestStreak:0,correctCount:0,best:0,q:null,input:"",feedback:null,locked:false};}
+function defaults(){return{screen:"menu",mode:"campuran",diff:"mudah",name:"",qi:0,score:0,streak:0,bestStreak:0,correctCount:0,best:0,q:null,input:"",feedback:null,locked:false};}
 var S=store.getState(defaults());
+if(typeof S.name!=="string")S.name="";
 if(S.screen==="game"){S.screen="menu";S.locked=false;S.feedback=null;}
 var timerId=null,timeLeft=TIME_PER_Q,lastKey=null;
 function rnd(n){return Math.floor(Math.random()*n);}
@@ -168,10 +175,13 @@ function keyPress(k){
   else{if(inp.replace("-","").length>=5)return;inp+=k;}
   set({input:inp,feedback:null});
 }
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 function menuHTML(){
   var modes=[["campuran","Campuran"],["tambah","Penjumlahan"],["kurang","Pengurangan"],["kali","Perkalian"],["bagi","Pembagian"]];
   var diffs=[["mudah","Mudah"],["sedang","Sedang"],["sulit","Sulit"]];
   var h='<h2 class="ibg-title">Bilangan Bulat</h2><p class="ibg-sub">Game latihan matematika untuk anak SMP.<br>10 soal &bull; 20 detik per soal &bull; termasuk bilangan negatif!</p>';
+  h+='<div class="ibg-label">Nama Siswa</div>';
+  h+='<input id="ibg-name" class="ibg-nameinput" type="text" maxlength="30" placeholder="Ketik namamu di sini..." value="'+esc(S.name)+'">';
   h+='<div class="ibg-label">Pilih Operasi</div><div class="ibg-row">';
   h+=modes.map(function(m){return '<button class="ibg-opt'+(S.mode===m[0]?" sel":"")+'" data-act="mode" data-v="'+m[0]+'">'+m[1]+"</button>";}).join("");
   h+='</div><div class="ibg-label">Tingkat Kesulitan</div><div class="ibg-row">';
@@ -208,7 +218,7 @@ function resultHTML(){
   else if(acc>=50)msg="Bagus! Terus berlatih ya.";
   else msg="Jangan menyerah, coba lagi yuk!";
   var h='<h2 class="ibg-title">Selesai!</h2><p class="ibg-msg">'+msg+"</p>";
-  h+='<div class="ibg-big">'+S.score+"</div>";
+  h+='<div class="ibg-resultcard"><div class="ibg-rlabel">Nama Siswa</div><div class="ibg-rname">'+esc(S.name||"\u2014")+'</div><div class="ibg-rlabel">Total Skor</div><div class="ibg-rscore">'+S.score+"</div></div>";
   h+='<div class="ibg-stats">';
   h+='<div class="ibg-stat"><b>'+S.correctCount+"/"+TOTAL_Q+'</b><span>Jawaban benar</span></div>';
   h+='<div class="ibg-stat"><b>'+acc+'%</b><span>Akurasi</span></div>';
@@ -235,6 +245,12 @@ document.getElementById("ibg-body").addEventListener("click",function(e){
   else if(act==="submit")submit();
   else if(act==="again")startGame();
   else if(act==="menu")set({screen:"menu",locked:false,feedback:null});
+});
+document.getElementById("ibg-body").addEventListener("input",function(e){
+  if(e.target&&e.target.id==="ibg-name"){S=Object.assign({},S,{name:e.target.value});store.setState(S);}
+});
+document.getElementById("ibg-body").addEventListener("keydown",function(e){
+  if(e.target&&e.target.id==="ibg-name"&&e.key==="Enter"){e.preventDefault();startGame();}
 });
 document.addEventListener("keydown",function(e){
   if(S.screen!=="game"||S.locked)return;
