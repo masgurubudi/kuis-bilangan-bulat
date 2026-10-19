@@ -51,6 +51,8 @@ body{
 .ibg-label{font-size:12px;font-weight:700;color:var(--hatch-widget-muted);text-transform:uppercase;letter-spacing:.06em;margin:14px 0 8px}
 .ibg-input{width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid var(--hatch-widget-border);background:var(--hatch-widget-surface-muted);color:var(--hatch-widget-text);font-size:15px;font-weight:600;margin-bottom:2px}
 .ibg-input:focus{outline:2px solid var(--hatch-widget-focus);outline-offset:1px;border-color:var(--hatch-widget-accent)}
+.ibg-select{width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid var(--hatch-widget-border);background:var(--hatch-widget-surface-muted);color:var(--hatch-widget-text);font-size:15px;font-weight:600;margin-bottom:2px}
+.ibg-select:focus{outline:2px solid var(--hatch-widget-focus);outline-offset:1px;border-color:var(--hatch-widget-accent)}
 .ibg-row{display:flex;flex-wrap:wrap;gap:8px}
 .ibg-opt{flex:1 1 28%;min-width:80px;padding:10px 6px;border-radius:12px;border:1.5px solid var(--hatch-widget-border);background:var(--hatch-widget-surface-muted);color:var(--hatch-widget-text);font-size:13px;font-weight:600;cursor:pointer;text-align:center}
 .ibg-opt.sel{border-color:var(--hatch-widget-accent);background:var(--hatch-widget-accent);color:var(--hatch-widget-on-accent)}
@@ -106,6 +108,81 @@ try{
   FB=firebase.firestore();
 }catch(e){FB=null;}
 var SCORE_COLLECTION="kuis_bilangan_bulat";
+/* Daftar SMP se-Kabupaten Pacitan (nama, NPSN, kecamatan) — sumber: data publik Kemendikdasmen 2026 */
+var SCHOOLS=[
+["SMP NEGERI 1 PACITAN","20510976","Pacitan"],
+["SMP NEGERI 2 PACITAN","20510956","Pacitan"],
+["SMP NEGERI 3 PACITAN","20510947","Pacitan"],
+["SMP NEGERI 4 PACITAN","20510949","Pacitan"],
+["SMP NEGERI 5 PACITAN SATU ATAP","20570232","Pacitan"],
+["SMP PGRI PACITAN","20511063","Pacitan"],
+["SMP ISLAM TERPADU AR-RAHMAH","20574716","Pacitan"],
+["SMP MODEL AL-ISTIQOMAH PACITAN","20555834","Pacitan"],
+["SMP ISLAM NAHDLATUSSUBBAN","20570463","Pacitan"],
+["SMP NEGERI 1 KEBONAGUNG","20510967","Kebonagung"],
+["SMP NEGERI 2 KEBONAGUNG","20510969","Kebonagung"],
+["SMP NEGERI 3 KEBONAGUNG SATU ATAP","20573297","Kebonagung"],
+["SMP PGRI KEBONAGUNG","20511075","Kebonagung"],
+["SMP NEGERI 1 PUNUNG","20510974","Punung"],
+["SMP NEGERI 2 PUNUNG","20510944","Punung"],
+["SMP NEGERI 3 PUNUNG","20510954","Punung"],
+["SMP NEGERI 1 PRINGKUKU","20510975","Pringkuku"],
+["SMP NEGERI 2 PRINGKUKU","20510945","Pringkuku"],
+["SMP NEGERI 3 PRINGKUKU","20510955","Pringkuku"],
+["SMP PGRI SUGIHWARAS","20510965","Pringkuku"],
+["SMP MUHAMMADIYAH BOARDING SCHOOL PRINGKUKU","70014702","Pringkuku"],
+["SMP NEGERI 1 DONOROJO","20510959","Donorojo"],
+["SMP NEGERI 2 DONOROJO","20510970","Donorojo"],
+["SMP NEGERI 3 DONOROJO","20510939","Donorojo"],
+["SMP NEGERI 4 DONOROJO SATU ATAP","20540380","Donorojo"],
+["SMP PGRI GENDARAN","20511077","Donorojo"],
+["SMP NEGERI 1 NAWANGAN","20510968","Nawangan"],
+["SMP NEGERI 2 NAWANGAN","20510958","Nawangan"],
+["SMP NEGERI 3 NAWANGAN","20510938","Nawangan"],
+["SMP NEGERI 4 NAWANGAN","20510950","Nawangan"],
+["SMP PGRI GONDANG","20511076","Nawangan"],
+["SMP ISLAM TERPADU AL BANNA NAWANGAN","70004101","Nawangan"],
+["SMP NEGERI 1 BANDAR","20510960","Bandar"],
+["SMP NEGERI 2 BANDAR","20510971","Bandar"],
+["SMP NEGERI 3 BANDAR","20510940","Bandar"],
+["SMP NEGERI 4 BANDAR SATU ATAP","20557250","Bandar"],
+["SMP ISLAM TERPADU MA ARIF BANDAR","69760669","Bandar"],
+["SMP PGRI BANDAR","20511078","Bandar"],
+["SMP NEGERI 1 TEGALOMBO","20511021","Tegalombo"],
+["SMP NEGERI 2 TEGALOMBO","20510942","Tegalombo"],
+["SMP NEGERI 3 TEGALOMBO","20510952","Tegalombo"],
+["SMP NEGERI 4 TEGALOMBO SATU ATAP","20573296","Tegalombo"],
+["SMP NEGERI 5 TEGALOMBO SATU ATAP","69766201","Tegalombo"],
+["SMP HASYIM ASY'ARI KASIHAN","20570231","Tegalombo"],
+["SMP MUHAMMADIYAH 3","20511081","Tegalombo"],
+["SMP PGRI TEGALOMBO","20510964","Tegalombo"],
+["SMP NEGERI 1 TULAKAN","20511009","Tulakan"],
+["SMP NEGERI 2 TULAKAN","20510941","Tulakan"],
+["SMP NEGERI 3 TULAKAN","20510951","Tulakan"],
+["SMP NEGERI 4 TULAKAN","20510948","Tulakan"],
+["SMP HASYIM ASY ARI TULAKAN","20511064","Tulakan"],
+["SMP MUHAMMADIYAH 2 TULAKAN","20511073","Tulakan"],
+["SMP PGRI MONTONGAN","20511074","Tulakan"],
+["SMP PGRI TULAKAN","20510963","Tulakan"],
+["SMP NEGERI 1 NGADIROJO","20510937","Ngadirojo"],
+["SMP NEGERI 2 NGADIROJO","20510957","Ngadirojo"],
+["SMP NEGERI 3 NGADIROJO","20510946","Ngadirojo"],
+["SMP NEGERI 4 NGADIROJO SATU ATAP","20540381","Ngadirojo"],
+["SMP NEGERI 5 NGADIROJO SATU ATAP","20557251","Ngadirojo"],
+["SMP MIFTAHUL HUDA","20511072","Ngadirojo"],
+["SMP MUHAMMADIYAH 1 NGADIROJO","20511080","Ngadirojo"],
+["SMP NEGERI 1 SUDIMORO","20510973","Sudimoro"],
+["SMP NEGERI 2 SUDIMORO","20510943","Sudimoro"],
+["SMP NEGERI 3 SUDIMORO","20510953","Sudimoro"],
+["SMP NEGERI 4 SUDIMORO SATU ATAP","20549693","Sudimoro"],
+["SMP NEGERI 5 SUDIMORO SATU ATAP","20570242","Sudimoro"],
+["SMP NEGERI 6 SUDIMORO","69831500","Sudimoro"],
+["SMP NEGERI 1 ARJOSARI","20510961","Arjosari"],
+["SMP NEGERI 2 ARJOSARI","20510972","Arjosari"],
+["SMP NEGERI 3 ARJOSARI SATU ATAP","20549692","Arjosari"],
+["SMP NEGERI 4 ARJOSARI SATU ATAP","20573295","Arjosari"],
+["SMP PGRI ARJOSARI","20511079","Arjosari"]
+];
 
 /* Penyimpanan lokal sederhana (menggantikan bridge widget) */
 var store=(function(){
@@ -119,7 +196,7 @@ var store=(function(){
 var TOTAL_Q=10, TIME_PER_Q=20;
 var DIFFS={mudah:{range:10,mult:6},sedang:{range:25,mult:9},sulit:{range:50,mult:12}};
 var OP_OF={tambah:"+",kurang:"\u2212",kali:"\u00D7",bagi:"\u00F7"};
-function defaults(){return{screen:"menu",mode:"campuran",diff:"mudah",qi:0,score:0,streak:0,bestStreak:0,correctCount:0,best:0,q:null,input:"",feedback:null,locked:false,nama:"",kelas:"",saved:0,menuMsg:null};}
+function defaults(){return{screen:"menu",mode:"campuran",diff:"mudah",qi:0,score:0,streak:0,bestStreak:0,correctCount:0,best:0,q:null,input:"",feedback:null,locked:false,nama:"",kelas:"",sekolah:"",saved:0,menuMsg:null};}
 var S=store.getState(defaults());
 if(S.screen==="game"){S.screen="menu";S.locked=false;S.feedback=null;}
 var timerId=null,timeLeft=TIME_PER_Q,lastKey=null;
@@ -129,6 +206,14 @@ function pick(a){return a[rnd(a.length)];}
 function fmt(n){return n<0?"\u2212"+Math.abs(n):String(n);}
 function fmtParen(n){return n<0?"("+fmt(n)+")":String(n);}
 function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function schoolOptions(){
+  var seen={},h='<option value="">-- Pilih sekolah --</option>';
+  SCHOOLS.forEach(function(s){
+    if(!seen[s[2]]){seen[s[2]]=1;h+='<optgroup label="Kec. '+esc(s[2])+'">';}
+    h+='<option value="'+esc(s[0])+'"'+(S.sekolah===s[0]?" selected":"")+'>'+esc(s[0])+"</option>";
+  });
+  return h+'</optgroup>';
+}
 function set(nx){S=Object.assign({},S,nx);store.setState(S);render();manageTimer();}
 function genQ(){
   var D=DIFFS[S.diff],op,a,b,ans;
@@ -139,7 +224,7 @@ function genQ(){
   else{b=ri(-D.mult,D.mult);if(b===0)b=1;ans=ri(-D.mult,D.mult);a=b*ans;}
   return{a:a,op:op,b:b,ans:ans};
 }
-function startGame(nama,kelas){set({screen:"game",qi:0,score:0,streak:0,bestStreak:0,correctCount:0,q:genQ(),input:"",feedback:null,locked:false,nama:nama,kelas:kelas,saved:0,menuMsg:null});}
+function startGame(nama,kelas,sekolah){set({screen:"game",qi:0,score:0,streak:0,bestStreak:0,correctCount:0,q:genQ(),input:"",feedback:null,locked:false,nama:nama,kelas:kelas,sekolah:sekolah,saved:0,menuMsg:null});}
 function nextQ(){
   if(S.qi+1>=TOTAL_Q){finishGame();return;}
   set({qi:S.qi+1,q:genQ(),input:"",feedback:null,locked:false});
@@ -149,11 +234,11 @@ function finishGame(){
   if(FB)saveScore();
 }
 function saveScore(){
-  var nama=S.nama,kelas=S.kelas,score=S.score,cc=S.correctCount,bs=S.bestStreak,mode=S.mode,diff=S.diff;
+  var nama=S.nama,kelas=S.kelas,sekolah=S.sekolah,score=S.score,cc=S.correctCount,bs=S.bestStreak,mode=S.mode,diff=S.diff;
   var acc=Math.round(cc/TOTAL_Q*100);
   try{
     FB.collection(SCORE_COLLECTION).add({
-      nama:nama,kelas:kelas,skor:score,benar:cc,total:TOTAL_Q,akurasi:acc,
+      nama:nama,kelas:kelas,sekolah:sekolah,skor:score,benar:cc,total:TOTAL_Q,akurasi:acc,
       mode:mode,kesulitan:diff,streakTerbaik:bs,
       createdAt:firebase.firestore.FieldValue.serverTimestamp()
     }).then(function(){if(S.screen==="result")set({saved:2});})
@@ -213,6 +298,7 @@ function menuHTML(){
   var h='<h2 class="ibg-title">Bilangan Bulat</h2><p class="ibg-sub">Game latihan matematika untuk anak SMP.<br>10 soal &bull; 20 detik per soal &bull; termasuk bilangan negatif!</p>';
   h+='<div class="ibg-label">Nama Siswa</div><input id="ibg-nama" class="ibg-input" type="text" maxlength="30" placeholder="Tulis namamu..." value="'+esc(S.nama)+'">';
   h+='<div class="ibg-label">Kelas</div><input id="ibg-kelas" class="ibg-input" type="text" maxlength="20" placeholder="Contoh: 7A" value="'+esc(S.kelas)+'">';
+  h+='<div class="ibg-label">Nama Sekolah</div><select id="ibg-sekolah" class="ibg-select">'+schoolOptions()+"</select>";
   h+='<div class="ibg-label">Pilih Operasi</div><div class="ibg-row">';
   h+=modes.map(function(m){return '<button class="ibg-opt'+(S.mode===m[0]?" sel":"")+'" data-act="mode" data-v="'+m[0]+'">'+m[1]+"</button>";}).join("");
   h+='</div><div class="ibg-label">Tingkat Kesulitan</div><div class="ibg-row">';
@@ -255,7 +341,7 @@ function resultHTML(){
   else if(acc>=50)msg="Bagus! Terus berlatih ya.";
   else msg="Jangan menyerah, coba lagi yuk!";
   var h='<h2 class="ibg-title">Selesai!</h2><p class="ibg-msg">'+msg+"</p>";
-  h+='<div class="ibg-namecard">👤 '+esc(S.nama)+" &bull; Kelas "+esc(S.kelas)+"</div>";
+  h+='<div class="ibg-namecard">👤 '+esc(S.nama)+" &bull; Kelas "+esc(S.kelas)+'<br><span style="font-size:12px;font-weight:600;color:var(--hatch-widget-muted)">'+esc(S.sekolah)+"</span></div>";
   h+=saveStatHTML();
   h+='<div class="ibg-big">'+S.score+"</div>";
   h+='<div class="ibg-stats">';
@@ -282,12 +368,13 @@ document.getElementById("ibg-body").addEventListener("click",function(e){
   else if(act==="start"){
     var nm=document.getElementById("ibg-nama").value.trim();
     var kl=document.getElementById("ibg-kelas").value.trim();
-    if(!nm||!kl){set({menuMsg:"Isi nama dan kelas dulu ya!"});return;}
-    startGame(nm,kl);
+    var sk=document.getElementById("ibg-sekolah").value;
+    if(!nm||!kl||!sk){set({menuMsg:"Isi nama, kelas, dan sekolah dulu ya!"});return;}
+    startGame(nm,kl,sk);
   }
   else if(act==="key")keyPress(v);
   else if(act==="submit")submit();
-  else if(act==="again")startGame(S.nama,S.kelas);
+  else if(act==="again")startGame(S.nama,S.kelas,S.sekolah);
   else if(act==="menu")set({screen:"menu",locked:false,feedback:null,menuMsg:null});
 });
 document.addEventListener("keydown",function(e){

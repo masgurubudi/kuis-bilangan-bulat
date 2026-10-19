@@ -56,8 +56,11 @@ body{
 .g-btn{width:100%;padding:13px;border:none;border-radius:14px;background:var(--hatch-widget-accent);color:var(--hatch-widget-on-accent);font-size:16px;font-weight:800;cursor:pointer;margin-top:18px}
 .g-btn.ghost{background:var(--hatch-widget-surface-muted);color:var(--hatch-widget-text);border:1px solid var(--hatch-widget-border);margin-top:10px;font-size:14px;font-weight:700}
 .g-btn.small{width:auto;padding:9px 18px;font-size:13px;margin-top:0}
+.g-btn.tab{width:auto;padding:10px 20px;font-size:14px;margin-top:0;flex:1}
+.g-btn.tab.off{background:var(--hatch-widget-surface-muted);color:var(--hatch-widget-text);border:1px solid var(--hatch-widget-border)}
 .g-err{min-height:20px;text-align:center;font-weight:700;font-size:13px;color:var(--ibg-bad);margin-top:10px}
 .g-filters{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
+.g-tabs{display:flex;gap:10px;margin:14px 0 4px}
 .g-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0 4px}
 .g-stat{background:var(--hatch-widget-surface-muted);border-radius:12px;padding:12px;text-align:center}
 .g-stat b{font-size:20px;display:block}.g-stat span{font-size:11px;color:var(--hatch-widget-muted)}
@@ -71,6 +74,7 @@ table.g-table tr:last-child td{border-bottom:none}
 .g-empty{text-align:center;color:var(--hatch-widget-muted);padding:26px 10px;font-size:14px}
 .g-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
 .g-note{font-size:12px;color:var(--hatch-widget-muted);text-align:center;margin-top:14px;line-height:1.5}
+.g-role{display:inline-block;background:var(--hatch-widget-surface-muted);border:1px solid var(--hatch-widget-border);border-radius:99px;padding:4px 14px;font-size:12px;font-weight:700;color:var(--hatch-widget-text);margin-top:8px}
 button:focus-visible{outline:2px solid var(--hatch-widget-focus);outline-offset:2px}
 </style>
 </head>
@@ -79,9 +83,84 @@ button:focus-visible{outline:2px solid var(--hatch-widget-focus);outline-offset:
 <script>
 (function(){
 "use strict";
-/* ===== PIN GURU — ganti sesuai keinginan ===== */
-var TEACHER_PIN="123456";
+/* ===== PIN MASTER (admin kabupaten) — ganti sesuai keinginan ===== */
+var MASTER_PIN="123456";
 var SCORE_COLLECTION="kuis_bilangan_bulat";
+/* Daftar SMP se-Kabupaten Pacitan (nama, NPSN, kecamatan) */
+var SCHOOLS=[
+["SMP NEGERI 1 PACITAN","20510976","Pacitan"],
+["SMP NEGERI 2 PACITAN","20510956","Pacitan"],
+["SMP NEGERI 3 PACITAN","20510947","Pacitan"],
+["SMP NEGERI 4 PACITAN","20510949","Pacitan"],
+["SMP NEGERI 5 PACITAN SATU ATAP","20570232","Pacitan"],
+["SMP PGRI PACITAN","20511063","Pacitan"],
+["SMP ISLAM TERPADU AR-RAHMAH","20574716","Pacitan"],
+["SMP MODEL AL-ISTIQOMAH PACITAN","20555834","Pacitan"],
+["SMP ISLAM NAHDLATUSSUBBAN","20570463","Pacitan"],
+["SMP NEGERI 1 KEBONAGUNG","20510967","Kebonagung"],
+["SMP NEGERI 2 KEBONAGUNG","20510969","Kebonagung"],
+["SMP NEGERI 3 KEBONAGUNG SATU ATAP","20573297","Kebonagung"],
+["SMP PGRI KEBONAGUNG","20511075","Kebonagung"],
+["SMP NEGERI 1 PUNUNG","20510974","Punung"],
+["SMP NEGERI 2 PUNUNG","20510944","Punung"],
+["SMP NEGERI 3 PUNUNG","20510954","Punung"],
+["SMP NEGERI 1 PRINGKUKU","20510975","Pringkuku"],
+["SMP NEGERI 2 PRINGKUKU","20510945","Pringkuku"],
+["SMP NEGERI 3 PRINGKUKU","20510955","Pringkuku"],
+["SMP PGRI SUGIHWARAS","20510965","Pringkuku"],
+["SMP MUHAMMADIYAH BOARDING SCHOOL PRINGKUKU","70014702","Pringkuku"],
+["SMP NEGERI 1 DONOROJO","20510959","Donorojo"],
+["SMP NEGERI 2 DONOROJO","20510970","Donorojo"],
+["SMP NEGERI 3 DONOROJO","20510939","Donorojo"],
+["SMP NEGERI 4 DONOROJO SATU ATAP","20540380","Donorojo"],
+["SMP PGRI GENDARAN","20511077","Donorojo"],
+["SMP NEGERI 1 NAWANGAN","20510968","Nawangan"],
+["SMP NEGERI 2 NAWANGAN","20510958","Nawangan"],
+["SMP NEGERI 3 NAWANGAN","20510938","Nawangan"],
+["SMP NEGERI 4 NAWANGAN","20510950","Nawangan"],
+["SMP PGRI GONDANG","20511076","Nawangan"],
+["SMP ISLAM TERPADU AL BANNA NAWANGAN","70004101","Nawangan"],
+["SMP NEGERI 1 BANDAR","20510960","Bandar"],
+["SMP NEGERI 2 BANDAR","20510971","Bandar"],
+["SMP NEGERI 3 BANDAR","20510940","Bandar"],
+["SMP NEGERI 4 BANDAR SATU ATAP","20557250","Bandar"],
+["SMP ISLAM TERPADU MA ARIF BANDAR","69760669","Bandar"],
+["SMP PGRI BANDAR","20511078","Bandar"],
+["SMP NEGERI 1 TEGALOMBO","20511021","Tegalombo"],
+["SMP NEGERI 2 TEGALOMBO","20510942","Tegalombo"],
+["SMP NEGERI 3 TEGALOMBO","20510952","Tegalombo"],
+["SMP NEGERI 4 TEGALOMBO SATU ATAP","20573296","Tegalombo"],
+["SMP NEGERI 5 TEGALOMBO SATU ATAP","69766201","Tegalombo"],
+["SMP HASYIM ASY'ARI KASIHAN","20570231","Tegalombo"],
+["SMP MUHAMMADIYAH 3","20511081","Tegalombo"],
+["SMP PGRI TEGALOMBO","20510964","Tegalombo"],
+["SMP NEGERI 1 TULAKAN","20511009","Tulakan"],
+["SMP NEGERI 2 TULAKAN","20510941","Tulakan"],
+["SMP NEGERI 3 TULAKAN","20510951","Tulakan"],
+["SMP NEGERI 4 TULAKAN","20510948","Tulakan"],
+["SMP HASYIM ASY ARI TULAKAN","20511064","Tulakan"],
+["SMP MUHAMMADIYAH 2 TULAKAN","20511073","Tulakan"],
+["SMP PGRI MONTONGAN","20511074","Tulakan"],
+["SMP PGRI TULAKAN","20510963","Tulakan"],
+["SMP NEGERI 1 NGADIROJO","20510937","Ngadirojo"],
+["SMP NEGERI 2 NGADIROJO","20510957","Ngadirojo"],
+["SMP NEGERI 3 NGADIROJO","20510946","Ngadirojo"],
+["SMP NEGERI 4 NGADIROJO SATU ATAP","20540381","Ngadirojo"],
+["SMP NEGERI 5 NGADIROJO SATU ATAP","20557251","Ngadirojo"],
+["SMP MIFTAHUL HUDA","20511072","Ngadirojo"],
+["SMP MUHAMMADIYAH 1 NGADIROJO","20511080","Ngadirojo"],
+["SMP NEGERI 1 SUDIMORO","20510973","Sudimoro"],
+["SMP NEGERI 2 SUDIMORO","20510943","Sudimoro"],
+["SMP NEGERI 3 SUDIMORO","20510953","Sudimoro"],
+["SMP NEGERI 4 SUDIMORO SATU ATAP","20549693","Sudimoro"],
+["SMP NEGERI 5 SUDIMORO SATU ATAP","20570242","Sudimoro"],
+["SMP NEGERI 6 SUDIMORO","69831500","Sudimoro"],
+["SMP NEGERI 1 ARJOSARI","20510961","Arjosari"],
+["SMP NEGERI 2 ARJOSARI","20510972","Arjosari"],
+["SMP NEGERI 3 ARJOSARI SATU ATAP","20549692","Arjosari"],
+["SMP NEGERI 4 ARJOSARI SATU ATAP","20573295","Arjosari"],
+["SMP PGRI ARJOSARI","20511079","Arjosari"]
+];
 
 var FB=null, dbOK=false;
 try{
@@ -97,118 +176,135 @@ try{
 }catch(e){dbOK=false;}
 
 var root=document.getElementById("g-root");
-var authed=sessionStorage.getItem("guru_auth")==="1";
-var allRows=[],kelasFilter="all",namaSearch="",loading=false,loadError=null;
+var auth=null;
+try{auth=JSON.parse(sessionStorage.getItem("guru_auth")||"null");}catch(e){auth=null;}
+var allRows=[],tab="sekolah",kelasFilter="all",namaSearch="",adminSekolah="",loading=false,loadError=null;
 
 function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function npsnOf(name){for(var i=0;i<SCHOOLS.length;i++)if(SCHOOLS[i][0]===name)return SCHOOLS[i][1];return null;}
 function fmtDate(ts){
   if(!ts||!ts.toDate)return "—";
   try{return ts.toDate().toLocaleString("id-ID",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"});}catch(e){return "—";}
 }
+function schoolOptions(sel){
+  var seen={},h='<option value="">-- Pilih sekolah --</option>';
+  SCHOOLS.forEach(function(s){
+    if(!seen[s[2]]){seen[s[2]]=1;h+='<optgroup label="Kec. '+esc(s[2])+'">';}
+    h+='<option value="'+esc(s[0])+'"'+(sel===s[0]?" selected":"")+'>'+esc(s[0])+"</option>";
+  });
+  return h+'</optgroup>';
+}
 
-/* ---------- Layar PIN ---------- */
-function showPin(errMsg){
+/* ---------- Layar masuk ---------- */
+function showLogin(errMsg){
   root.innerHTML=
-  '<div class="g-card" style="max-width:440px;margin:0 auto">'+
+  '<div class="g-card" style="max-width:480px;margin:0 auto">'+
     '<p class="g-title">🔒 Halaman Guru</p>'+
-    '<p class="g-sub">Leaderboard & rekap nilai Kuis Bilangan Bulat.<br>Masukkan PIN guru untuk melanjutkan.</p>'+
-    '<div class="g-label">PIN Guru</div>'+
-    '<input id="g-pin" class="g-input" type="password" inputmode="numeric" maxlength="12" placeholder="••••••" autocomplete="off">'+
+    '<p class="g-sub">Leaderboard & rekap nilai Kuis Bilangan Bulat<br>se-Kabupaten Pacitan.</p>'+
+    '<div class="g-label">Sekolah Anda</div>'+
+    '<select id="g-sekolah" class="g-select">'+schoolOptions("")+"</select>"+
+    '<div class="g-label">NPSN Sekolah / PIN Master</div>'+
+    '<input id="g-kode" class="g-input" type="password" inputmode="numeric" maxlength="20" placeholder="Masukkan NPSN atau PIN master" autocomplete="off">'+
     '<button class="g-btn" id="g-masuk">Masuk</button>'+
     '<div class="g-err">'+(errMsg?esc(errMsg):"")+"</div>"+
-    '<p class="g-note">Halaman ini khusus untuk guru.</p>'+
+    '<p class="g-note">Guru: pilih sekolah lalu masukkan NPSN sekolah Anda.<br>Admin kabupaten: masukkan PIN master (kolom sekolah boleh dikosongkan).</p>'+
   "</div>";
-  var inp=document.getElementById("g-pin");inp.focus();
   function coba(){
-    if(inp.value===TEACHER_PIN){sessionStorage.setItem("guru_auth","1");authed=true;showDash();}
-    else showPin("PIN salah, coba lagi.");
+    var sk=document.getElementById("g-sekolah").value;
+    var kode=document.getElementById("g-kode").value.trim();
+    if(kode===MASTER_PIN){
+      auth={role:"admin"};persist();showDash();
+    }else if(sk&&kode===npsnOf(sk)){
+      auth={role:"sekolah",sekolah:sk};persist();showDash();
+    }else{
+      showLogin("NPSN tidak cocok dengan sekolah yang dipilih.");
+    }
   }
   document.getElementById("g-masuk").addEventListener("click",coba);
-  inp.addEventListener("keydown",function(e){if(e.key==="Enter")coba();});
+  document.getElementById("g-kode").addEventListener("keydown",function(e){if(e.key==="Enter")coba();});
 }
+function persist(){try{sessionStorage.setItem("guru_auth",JSON.stringify(auth));}catch(e){}}
 
 /* ---------- Ambil data ---------- */
 function loadData(){
   if(!dbOK){loadError="Koneksi database gagal. Periksa koneksi internet.";renderDash();return;}
   loading=true;loadError=null;renderDash();
-  FB.collection(SCORE_COLLECTION).orderBy("createdAt","desc").limit(1000).get()
+  FB.collection(SCORE_COLLECTION).orderBy("createdAt","desc").limit(2000).get()
     .then(function(snap){
       allRows=[];
       snap.forEach(function(d){
         var v=d.data();
         allRows.push({
-          nama:String(v.nama||"—"),kelas:String(v.kelas||"—"),
+          nama:String(v.nama||"—"),kelas:String(v.kelas||"—"),sekolah:String(v.sekolah||"—"),
           skor:Number(v.skor||0),benar:Number(v.benar||0),total:Number(v.total||0),
           akurasi:Number(v.akurasi||0),mode:String(v.mode||"campuran"),
           createdAt:v.createdAt||null
         });
       });
-      buildKelasOptions();loading=false;renderDash();
+      if(auth&&auth.role==="admin"&&!adminSekolah&&SCHOOLS.length)adminSekolah=SCHOOLS[0][0];
+      loading=false;renderDash();
     })
     .catch(function(err){
       loading=false;
-      loadError="Gagal memuat data. Pastikan Firestore Database sudah dibuat dan rules sudah dipasang. ("+err.code+")";
+      loadError="Gagal memuat data ("+err.code+"). Pastikan rules Firestore sudah diperbarui.";
       renderDash();
     });
 }
-function uniqueKelas(){
+function currentSchool(){
+  if(!auth)return "";
+  if(auth.role==="admin")return adminSekolah;
+  return auth.sekolah;
+}
+function schoolRows(){
+  var sk=currentSchool();
+  return allRows.filter(function(r){return r.sekolah===sk;});
+}
+function uniqueKelas(rows){
   var s={},out=[];
-  allRows.forEach(function(r){if(!s[r.kelas]){s[r.kelas]=1;out.push(r.kelas);}});
+  rows.forEach(function(r){if(!s[r.kelas]){s[r.kelas]=1;out.push(r.kelas);}});
   return out.sort();
 }
-function buildKelasOptions(){
-  var sel=document.getElementById("g-kelas");
-  if(!sel)return;
-  var opts='<option value="all">Semua Kelas</option>'+uniqueKelas().map(function(k){
-    return '<option value="'+esc(k)+'"'+(kelasFilter===k?" selected":"")+">Kelas "+esc(k)+"</option>";
-  }).join("");
-  sel.innerHTML=opts;
-}
-function filteredRows(){
-  return allRows.filter(function(r){
-    if(kelasFilter!=="all"&&r.kelas!==kelasFilter)return false;
-    if(namaSearch&&r.nama.toLowerCase().indexOf(namaSearch.toLowerCase())<0)return false;
-    return true;
-  });
-}
-function leaderboard(){
-  var map={},rows=filteredRows();
+function bestPerStudent(rows){
+  var map={};
   rows.forEach(function(r){
-    var key=r.nama.toLowerCase().trim()+"|"+r.kelas.toLowerCase().trim();
+    var key=r.nama.toLowerCase().trim()+"|"+r.kelas.toLowerCase().trim()+"|"+r.sekolah;
     if(!map[key]||r.skor>map[key].skor)map[key]=r;
   });
   var arr=Object.keys(map).map(function(k){return map[k];});
   arr.sort(function(a,b){return b.skor-a.skor||b.akurasi-a.akurasi;});
-  return arr.slice(0,10);
+  return arr;
 }
 
-/* ---------- Dashboard ---------- */
-function showDash(){loadData();}
-function renderDash(){
-  if(!authed){showPin();return;}
-  var rows=filteredRows(),lb=leaderboard();
+/* ---------- Tampilan: Sekolah Saya ---------- */
+function schoolViewHTML(){
+  var sk=currentSchool();
+  var rows=schoolRows().filter(function(r){
+    if(kelasFilter!=="all"&&r.kelas!==kelasFilter)return false;
+    if(namaSearch&&r.nama.toLowerCase().indexOf(namaSearch.toLowerCase())<0)return false;
+    return true;
+  });
+  var lb=bestPerStudent(rows).slice(0,10);
   var siswaUnik={},totSkor=0;
   rows.forEach(function(r){siswaUnik[r.nama.toLowerCase().trim()+"|"+r.kelas]=1;totSkor+=r.skor;});
   var nSiswa=Object.keys(siswaUnik).length;
   var avg=rows.length?Math.round(totSkor/rows.length):0;
 
-  var h='<div class="g-card">'+
-    '<div class="g-head"><div><p class="g-title" style="text-align:left">🏆 Leaderboard Guru</p>'+
-    '<p class="g-sub" style="text-align:left">Kuis Bilangan Bulat — rekap nilai siswa</p></div>'+
-    '<div><button class="g-btn small" id="g-refresh">↻ Muat Ulang</button> '+
-    '<button class="g-btn small ghost" id="g-keluar" style="margin-top:0">Keluar</button></div></div>'+
-    '<div class="g-filters">'+
-      '<div><div class="g-label">Filter Kelas</div><select id="g-kelas" class="g-select"><option value="all">Semua Kelas</option></select></div>'+
-      '<div><div class="g-label">Cari Nama</div><input id="g-cari" class="g-input" type="text" placeholder="Ketik nama..." value="'+esc(namaSearch)+'"></div>'+
-    "</div>"+
-    '<div class="g-stats">'+
-      '<div class="g-stat"><b>'+rows.length+'</b><span>Percobaan</span></div>'+
-      '<div class="g-stat"><b>'+nSiswa+'</b><span>Siswa</span></div>'+
-      '<div class="g-stat"><b>'+avg+'</b><span>Rata-rata skor</span></div>'+
-    "</div>"+
+  var h="";
+  if(auth.role==="admin"){
+    h+='<div class="g-label">Lihat Sekolah</div><select id="g-adminsekolah" class="g-select">'+schoolOptions(sk)+"</select>";
+  }
+  h+='<div class="g-filters">'+
+    '<div><div class="g-label">Filter Kelas</div><select id="g-kelas" class="g-select"><option value="all">Semua Kelas</option>'+
+    uniqueKelas(schoolRows()).map(function(k){return '<option value="'+esc(k)+'"'+(kelasFilter===k?" selected":"")+">Kelas "+esc(k)+"</option>";}).join("")+"</select></div>"+
+    '<div><div class="g-label">Cari Nama</div><input id="g-cari" class="g-input" type="text" placeholder="Ketik nama..." value="'+esc(namaSearch)+'"></div>'+
+  "</div>"+
+  '<div class="g-stats">'+
+    '<div class="g-stat"><b>'+rows.length+'</b><span>Percobaan</span></div>'+
+    '<div class="g-stat"><b>'+nSiswa+'</b><span>Siswa</span></div>'+
+    '<div class="g-stat"><b>'+avg+'</b><span>Rata-rata skor</span></div>'+
   "</div>";
 
-  h+='<div class="g-card"><p class="g-title" style="font-size:18px">🥇 Peringkat Teratas</p>'+
+  h+='<p class="g-title" style="font-size:18px;margin-top:18px">🥇 Peringkat Teratas</p>'+
      '<p class="g-sub">Skor terbaik tiap siswa'+(kelasFilter!=="all"?" — Kelas "+esc(kelasFilter):"")+"</p>";
   if(loading)h+='<div class="g-empty">⏳ Memuat data...</div>';
   else if(loadError)h+='<div class="g-empty">⚠️ '+esc(loadError)+"</div>";
@@ -221,31 +317,103 @@ function renderDash(){
     });
     h+="</table></div>";
   }
-  h+="</div>";
 
-  h+='<div class="g-card"><p class="g-title" style="font-size:18px">📋 Rekap Semua Nilai</p>';
+  h+='<p class="g-title" style="font-size:18px;margin-top:18px">📋 Rekap Semua Nilai</p>';
   if(loading)h+='<div class="g-empty">⏳ Memuat data...</div>';
   else if(loadError)h+='<div class="g-empty">⚠️ '+esc(loadError)+"</div>";
   else if(!rows.length)h+='<div class="g-empty">Belum ada data.</div>';
   else{
-    h+='<div class="g-tablewrap"><table class="g-table"><tr><th class="g-rank">#</th><th>Nama</th><th>Kelas</th><th>Skor</th><th>Benar</th><th>Akurasi</th><th>Mode</th><th>Waktu</th></tr>';
+    h+='<div class="g-tablewrap"><table class="g-table"><tr><th class="g-rank">#</th><th>Nama</th><th>Kelas</th><th>Skor</th><th>Benar</th><th>Akurasi</th><th>Waktu</th></tr>';
     rows.forEach(function(r,i){
-      h+="<tr><td class=\"g-rank\">"+(i+1)+"</td><td>"+esc(r.nama)+"</td><td>"+esc(r.kelas)+"</td><td><b>"+r.skor+"</b></td><td>"+r.benar+"/"+r.total+"</td><td>"+r.akurasi+"%</td><td>"+esc(r.mode)+"</td><td>"+esc(fmtDate(r.createdAt))+"</td></tr>";
+      h+="<tr><td class=\"g-rank\">"+(i+1)+"</td><td>"+esc(r.nama)+"</td><td>"+esc(r.kelas)+"</td><td><b>"+r.skor+"</b></td><td>"+r.benar+"/"+r.total+"</td><td>"+r.akurasi+"%</td><td>"+esc(fmtDate(r.createdAt))+"</td></tr>";
     });
     h+="</table></div>";
   }
-  h+='<p class="g-note">Menampilkan '+rows.length+' dari '+allRows.length+' percobaan tersimpan.</p></div>';
-
-  root.innerHTML=h;
-  buildKelasOptions();
-  document.getElementById("g-kelas").addEventListener("change",function(e){kelasFilter=e.target.value;renderDash();});
-  var cari=document.getElementById("g-cari");
-  cari.addEventListener("input",function(e){namaSearch=e.target.value;renderDash();var c2=document.getElementById("g-cari");c2.focus();c2.setSelectionRange(c2.value.length,c2.value.length);});
-  document.getElementById("g-refresh").addEventListener("click",loadData);
-  document.getElementById("g-keluar").addEventListener("click",function(){sessionStorage.removeItem("guru_auth");authed=false;showPin();});
+  h+='<p class="g-note">Menampilkan '+rows.length+' percobaan.</p>';
+  return h;
 }
 
-if(authed)showDash();else showPin();
+/* ---------- Tampilan: Rekap Kabupaten ---------- */
+function kabViewHTML(){
+  var top=bestPerStudent(allRows).slice(0,20);
+  var bySchool={};
+  allRows.forEach(function(r){
+    var k=r.sekolah||"—";
+    (bySchool[k]=bySchool[k]||[]).push(r);
+  });
+  var schoolRank=Object.keys(bySchool).map(function(k){
+    var best=bestPerStudent(bySchool[k]);
+    var sum=0;best.forEach(function(r){sum+=r.skor;});
+    var max=0;best.forEach(function(r){if(r.skor>max)max=r.skor;});
+    return{sekolah:k,siswa:best.length,avg:best.length?Math.round(sum/best.length):0,best:max};
+  });
+  schoolRank.sort(function(a,b){return b.avg-a.avg||b.best-a.best;});
+
+  var h='<p class="g-title" style="font-size:18px">🏆 Top 20 Siswa se-Kabupaten</p>'+
+    '<p class="g-sub">Skor terbaik tiap siswa di seluruh Kabupaten Pacitan</p>';
+  if(loading)h+='<div class="g-empty">⏳ Memuat data...</div>';
+  else if(loadError)h+='<div class="g-empty">⚠️ '+esc(loadError)+"</div>";
+  else if(!top.length)h+='<div class="g-empty">Belum ada data nilai.</div>';
+  else{
+    h+='<div class="g-tablewrap"><table class="g-table"><tr><th class="g-rank">#</th><th>Nama</th><th>Sekolah</th><th>Skor</th><th>Akurasi</th></tr>';
+    top.forEach(function(r,i){
+      var medal=i===0?"🥇":i===1?"🥈":i===2?"🥉":(i+1);
+      h+="<tr><td class=\"g-rank"+(i===0?" g-top1":"")+"\">"+medal+"</td><td><b>"+esc(r.nama)+"</b></td><td style='font-size:12px'>"+esc(r.sekolah)+"</td><td><b>"+r.skor+"</b></td><td>"+r.akurasi+"%</td></tr>";
+    });
+    h+="</table></div>";
+  }
+
+  h+='<p class="g-title" style="font-size:18px;margin-top:18px">🏫 Peringkat Sekolah</p>'+
+     '<p class="g-sub">Berdasarkan rata-rata skor terbaik tiap siswa</p>';
+  if(!loading&&!loadError&&schoolRank.length){
+    h+='<div class="g-tablewrap"><table class="g-table"><tr><th class="g-rank">#</th><th>Sekolah</th><th>Siswa</th><th>Rata-rata</th><th>Terbaik</th></tr>';
+    schoolRank.forEach(function(s,i){
+      h+="<tr><td class=\"g-rank"+(i===0?" g-top1":"")+"\">"+(i+1)+"</td><td style='font-size:12px'><b>"+esc(s.sekolah)+"</b></td><td>"+s.siswa+"</td><td><b>"+s.avg+"</b></td><td>"+s.best+"</td></tr>";
+    });
+    h+="</table></div>";
+  }else if(!loading&&!loadError){
+    h+='<div class="g-empty">Belum ada data.</div>';
+  }
+  h+='<p class="g-note">Rekap kabupaten — untuk melihat posisi siswa di tingkat kabupaten.</p>';
+  return h;
+}
+
+/* ---------- Dashboard ---------- */
+function showDash(){loadData();}
+function renderDash(){
+  if(!auth){showLogin();return;}
+  var isAdmin=auth.role==="admin";
+  var roleLabel=isAdmin?"👑 Admin Kabupaten Pacitan":"🏫 "+auth.sekolah;
+  var tabSekolah=isAdmin?"🏫 Per Sekolah":"🏫 Sekolah Saya";
+
+  var h='<div class="g-card">'+
+    '<div class="g-head"><div><p class="g-title" style="text-align:left">🏆 Leaderboard Guru</p>'+
+    '<p class="g-sub" style="text-align:left">Kuis Bilangan Bulat — se-Kabupaten Pacitan</p>'+
+    '<span class="g-role">'+esc(roleLabel)+"</span></div>"+
+    '<div><button class="g-btn small" id="g-refresh">↻ Muat Ulang</button> '+
+    '<button class="g-btn small ghost" id="g-keluar" style="margin-top:0">Keluar</button></div></div>'+
+    '<div class="g-tabs">'+
+      '<button class="g-btn tab'+(tab==="sekolah"?"":" off")+'" id="g-tabsekolah">'+tabSekolah+"</button>"+
+      '<button class="g-btn tab'+(tab==="kab"?"":" off")+'" id="g-tabkab">🌍 Rekap Kabupaten</button>'+
+    "</div>"+
+  "</div>";
+
+  h+='<div class="g-card">'+(tab==="sekolah"?schoolViewHTML():kabViewHTML())+"</div>";
+  root.innerHTML=h;
+
+  document.getElementById("g-tabsekolah").addEventListener("click",function(){tab="sekolah";renderDash();});
+  document.getElementById("g-tabkab").addEventListener("click",function(){tab="kab";renderDash();});
+  document.getElementById("g-refresh").addEventListener("click",loadData);
+  document.getElementById("g-keluar").addEventListener("click",function(){try{sessionStorage.removeItem("guru_auth");}catch(e){}auth=null;showLogin();});
+  var ask=document.getElementById("g-adminsekolah");
+  if(ask)ask.addEventListener("change",function(e){adminSekolah=e.target.value;renderDash();});
+  var ks=document.getElementById("g-kelas");
+  if(ks)ks.addEventListener("change",function(e){kelasFilter=e.target.value;renderDash();});
+  var cari=document.getElementById("g-cari");
+  if(cari)cari.addEventListener("input",function(e){namaSearch=e.target.value;renderDash();var c2=document.getElementById("g-cari");if(c2){c2.focus();c2.setSelectionRange(c2.value.length,c2.value.length);}});
+}
+
+if(auth)showDash();else showLogin();
 })();
 </script>
 </body>
