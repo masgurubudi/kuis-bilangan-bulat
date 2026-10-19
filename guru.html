@@ -53,6 +53,14 @@ body{
 .g-label{font-size:12px;font-weight:700;color:var(--hatch-widget-muted);text-transform:uppercase;letter-spacing:.06em;margin:14px 0 8px}
 .g-input,.g-select{width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid var(--hatch-widget-border);background:var(--hatch-widget-surface-muted);color:var(--hatch-widget-text);font-size:15px;font-weight:600}
 .g-input:focus,.g-select:focus{outline:2px solid var(--hatch-widget-focus);outline-offset:1px;border-color:var(--hatch-widget-accent)}
+.g-dd{position:relative}
+.g-ddlist{position:absolute;top:100%;left:0;right:0;max-height:260px;overflow-y:auto;background:var(--hatch-widget-surface);border:1.5px solid var(--hatch-widget-border);border-radius:12px;margin-top:4px;z-index:50;display:none;box-shadow:0 8px 24px var(--hatch-widget-shadow)}
+.g-dditem{padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--hatch-widget-border)}
+.g-dditem:last-child{border-bottom:none}
+.g-dditem b{display:block;font-size:14px}
+.g-dditem span{font-size:11px;color:var(--hatch-widget-muted)}
+.g-dditem:active{background:var(--hatch-widget-surface-muted)}
+.g-ddempty{padding:14px;text-align:center;color:var(--hatch-widget-muted);font-size:13px}
 .g-btn{width:100%;padding:13px;border:none;border-radius:14px;background:var(--hatch-widget-accent);color:var(--hatch-widget-on-accent);font-size:16px;font-weight:800;cursor:pointer;margin-top:18px}
 .g-btn.ghost{background:var(--hatch-widget-surface-muted);color:var(--hatch-widget-text);border:1px solid var(--hatch-widget-border);margin-top:10px;font-size:14px;font-weight:700}
 .g-btn.small{width:auto;padding:9px 18px;font-size:13px;margin-top:0}
@@ -186,14 +194,51 @@ function fmtDate(ts){
   if(!ts||!ts.toDate)return "—";
   try{return ts.toDate().toLocaleString("id-ID",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"});}catch(e){return "—";}
 }
-function schoolOptions(sel){
-  var seen={},h='<option value="">-- Pilih sekolah --</option>';
-  SCHOOLS.forEach(function(s){
-    if(!seen[s[2]]){seen[s[2]]=1;h+='<optgroup label="Kec. '+esc(s[2])+'">';}
-    h+='<option value="'+esc(s[0])+'"'+(sel===s[0]?" selected":"")+'>'+esc(s[0])+"</option>";
-  });
-  return h+'</optgroup>';
+function schoolComboHTML(prefix,placeholder,initial){
+  return '<div class="g-dd" id="'+prefix+'-sdd">'+
+    '<input id="'+prefix+'-sekolah-input" class="g-input" type="text" autocomplete="off" placeholder="'+placeholder+'" value="'+esc(initial||"")+'">'+
+    '<div id="'+prefix+'-sekolah-list" class="g-ddlist"></div></div>'+
+    '<input type="hidden" id="'+prefix+'-sekolah" value="'+esc(initial||"")+'">';
 }
+function renderSchoolListG(prefix,q){
+  var list=document.getElementById(prefix+"-sekolah-list");if(!list)return;
+  var query=(q||"").trim().toLowerCase();
+  var matches=SCHOOLS.filter(function(s){
+    return !query||s[0].toLowerCase().indexOf(query)>=0||s[2].toLowerCase().indexOf(query)>=0;
+  }).slice(0,60);
+  if(!matches.length){list.innerHTML='<div class="g-ddempty">Sekolah tidak ditemukan</div>';}
+  else{list.innerHTML=matches.map(function(s){
+    return '<div class="g-dditem" data-v="'+esc(s[0])+'"><b>'+esc(s[0])+'</b><span>Kec. '+esc(s[2])+"</span></div>";
+  }).join("");}
+  list.style.display="block";
+}
+function hideSchoolListG(prefix){var l=document.getElementById(prefix+"-sekolah-list");if(l)l.style.display="none";}
+function bindSchoolComboG(prefix,onPick){
+  var inp=document.getElementById(prefix+"-sekolah-input");
+  var list=document.getElementById(prefix+"-sekolah-list");
+  var hid=document.getElementById(prefix+"-sekolah");
+  if(!inp||!list||!hid)return;
+  inp.addEventListener("input",function(){renderSchoolListG(prefix,inp.value);});
+  inp.addEventListener("focus",function(){renderSchoolListG(prefix,inp.value);});
+  list.addEventListener("click",function(e){
+    var it=e.target.closest(".g-dditem");if(!it)return;
+    hid.value=it.getAttribute("data-v");inp.value=it.getAttribute("data-v");
+    hideSchoolListG(prefix);onPick(it.getAttribute("data-v"));
+  });
+}
+function resolveSchoolG(prefix){
+  var hid=document.getElementById(prefix+"-sekolah");
+  var sk=hid?hid.value:"";
+  if(sk)return sk;
+  var inp=document.getElementById(prefix+"-sekolah-input");
+  var t=inp?inp.value.trim().toLowerCase():"";
+  for(var i=0;i<SCHOOLS.length;i++)if(SCHOOLS[i][0].toLowerCase()===t)return SCHOOLS[i][0];
+  return "";
+}
+document.addEventListener("click",function(e){
+  if(!e.target.closest("#g-sdd"))hideSchoolListG("g");
+  if(!e.target.closest("#ga-sdd"))hideSchoolListG("ga");
+});
 
 /* ---------- Layar masuk ---------- */
 function showLogin(errMsg){
@@ -202,7 +247,7 @@ function showLogin(errMsg){
     '<p class="g-title">🔒 Halaman Guru</p>'+
     '<p class="g-sub">Leaderboard & rekap nilai Kuis Bilangan Bulat<br>se-Kabupaten Pacitan.</p>'+
     '<div class="g-label">Sekolah Anda</div>'+
-    '<select id="g-sekolah" class="g-select">'+schoolOptions("")+"</select>"+
+    schoolComboHTML("g","Ketik untuk cari sekolah...","")+
     '<div class="g-label">NPSN Sekolah / PIN Master</div>'+
     '<input id="g-kode" class="g-input" type="password" inputmode="numeric" maxlength="20" placeholder="Masukkan NPSN atau PIN master" autocomplete="off">'+
     '<button class="g-btn" id="g-masuk">Masuk</button>'+
@@ -210,7 +255,7 @@ function showLogin(errMsg){
     '<p class="g-note">Guru: pilih sekolah lalu masukkan NPSN sekolah Anda.<br>Admin kabupaten: masukkan PIN master (kolom sekolah boleh dikosongkan).</p>'+
   "</div>";
   function coba(){
-    var sk=document.getElementById("g-sekolah").value;
+    var sk=resolveSchoolG("g");
     var kode=document.getElementById("g-kode").value.trim();
     if(kode===MASTER_PIN){
       auth={role:"admin"};persist();showDash();
@@ -222,6 +267,7 @@ function showLogin(errMsg){
   }
   document.getElementById("g-masuk").addEventListener("click",coba);
   document.getElementById("g-kode").addEventListener("keydown",function(e){if(e.key==="Enter")coba();});
+  bindSchoolComboG("g",function(){});
 }
 function persist(){try{sessionStorage.setItem("guru_auth",JSON.stringify(auth));}catch(e){}}
 
@@ -291,7 +337,7 @@ function schoolViewHTML(){
 
   var h="";
   if(auth.role==="admin"){
-    h+='<div class="g-label">Lihat Sekolah</div><select id="g-adminsekolah" class="g-select">'+schoolOptions(sk)+"</select>";
+    h+='<div class="g-label">Lihat Sekolah</div>'+schoolComboHTML("ga","Ketik untuk cari sekolah...",sk);
   }
   h+='<div class="g-filters">'+
     '<div><div class="g-label">Filter Kelas</div><select id="g-kelas" class="g-select"><option value="all">Semua Kelas</option>'+
@@ -405,8 +451,8 @@ function renderDash(){
   document.getElementById("g-tabkab").addEventListener("click",function(){tab="kab";renderDash();});
   document.getElementById("g-refresh").addEventListener("click",loadData);
   document.getElementById("g-keluar").addEventListener("click",function(){try{sessionStorage.removeItem("guru_auth");}catch(e){}auth=null;showLogin();});
-  var ask=document.getElementById("g-adminsekolah");
-  if(ask)ask.addEventListener("change",function(e){adminSekolah=e.target.value;renderDash();});
+  var ask=document.getElementById("ga-sekolah-input");
+  if(ask)bindSchoolComboG("ga",function(v){adminSekolah=v;renderDash();});
   var ks=document.getElementById("g-kelas");
   if(ks)ks.addEventListener("change",function(e){kelasFilter=e.target.value;renderDash();});
   var cari=document.getElementById("g-cari");
