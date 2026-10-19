@@ -185,7 +185,12 @@ try{
 
 var root=document.getElementById("g-root");
 var auth=null;
-try{auth=JSON.parse(sessionStorage.getItem("guru_auth")||"null");}catch(e){auth=null;}
+try{
+  var _a=JSON.parse(sessionStorage.getItem("guru_auth")||"null");
+  if(_a&&_a.role==="admin")auth=_a;
+  else if(_a&&_a.role==="sekolah"&&_a.sekolah)auth=_a;
+  else{try{sessionStorage.removeItem("guru_auth");}catch(_e){}}
+}catch(e){auth=null;}
 var allRows=[],tab="sekolah",kelasFilter="all",namaSearch="",adminSekolah="",loading=false,loadError=null;
 
 function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
