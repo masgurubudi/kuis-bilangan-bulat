@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Game Bilangan Bulat — Latihan Matematika SMP</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 <style>
 :root{
   --hatch-widget-bg:#f1f2f6;
@@ -47,6 +49,8 @@ body{
 .ibg-title{font-size:22px;font-weight:800;text-align:center;margin:0 0 4px}
 .ibg-sub{text-align:center;color:var(--hatch-widget-muted);font-size:13px;margin:0 0 6px;line-height:1.5}
 .ibg-label{font-size:12px;font-weight:700;color:var(--hatch-widget-muted);text-transform:uppercase;letter-spacing:.06em;margin:14px 0 8px}
+.ibg-input{width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid var(--hatch-widget-border);background:var(--hatch-widget-surface-muted);color:var(--hatch-widget-text);font-size:15px;font-weight:600;margin-bottom:2px}
+.ibg-input:focus{outline:2px solid var(--hatch-widget-focus);outline-offset:1px;border-color:var(--hatch-widget-accent)}
 .ibg-row{display:flex;flex-wrap:wrap;gap:8px}
 .ibg-opt{flex:1 1 28%;min-width:80px;padding:10px 6px;border-radius:12px;border:1.5px solid var(--hatch-widget-border);background:var(--hatch-widget-surface-muted);color:var(--hatch-widget-text);font-size:13px;font-weight:600;cursor:pointer;text-align:center}
 .ibg-opt.sel{border-color:var(--hatch-widget-accent);background:var(--hatch-widget-accent);color:var(--hatch-widget-on-accent)}
@@ -72,6 +76,10 @@ body{
 .ibg-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0 4px}
 .ibg-stat{background:var(--hatch-widget-surface-muted);border-radius:12px;padding:12px;text-align:center}
 .ibg-stat b{font-size:20px;display:block}.ibg-stat span{font-size:11px;color:var(--hatch-widget-muted)}
+.ibg-namecard{text-align:center;background:var(--hatch-widget-surface-muted);border-radius:12px;padding:10px;margin:10px 0 4px;font-size:15px;font-weight:700}
+.ibg-savestat{text-align:center;font-size:13px;font-weight:700;margin:6px 0 0}
+.ibg-savestat.ok{color:var(--ibg-ok)}.ibg-savestat.wait{color:var(--hatch-widget-muted)}.ibg-savestat.fail{color:var(--ibg-bad)}
+.ibg-menu-msg{min-height:20px;text-align:center;font-weight:700;font-size:13px;color:var(--ibg-bad);margin-top:10px}
 .ibg-foot{margin-top:16px;font-size:12px;color:var(--hatch-widget-muted);text-align:center}
 button:focus-visible{outline:2px solid var(--hatch-widget-focus);outline-offset:2px}
 </style>
@@ -84,6 +92,21 @@ button:focus-visible{outline:2px solid var(--hatch-widget-focus);outline-offset:
 <script>
 (function(){
 "use strict";
+/* ===== Firebase (database nilai) ===== */
+var FB=null;
+try{
+  firebase.initializeApp({
+    apiKey: "AIzaSyCRJo9Xou0X9K3ZGlvmArtUOod9ohR4lQk",
+    authDomain: "database-mpi-spendaka.firebaseapp.com",
+    projectId: "database-mpi-spendaka",
+    storageBucket: "database-mpi-spendaka.firebasestorage.app",
+    messagingSenderId: "909550540115",
+    appId: "1:909550540115:web:efcbb3efc2d138306bfda6"
+  });
+  FB=firebase.firestore();
+}catch(e){FB=null;}
+var SCORE_COLLECTION="kuis_bilangan_bulat";
+
 /* Penyimpanan lokal sederhana (menggantikan bridge widget) */
 var store=(function(){
   var KEY="ibg-state-v1";
@@ -96,7 +119,7 @@ var store=(function(){
 var TOTAL_Q=10, TIME_PER_Q=20;
 var DIFFS={mudah:{range:10,mult:6},sedang:{range:25,mult:9},sulit:{range:50,mult:12}};
 var OP_OF={tambah:"+",kurang:"\u2212",kali:"\u00D7",bagi:"\u00F7"};
-function defaults(){return{screen:"menu",mode:"campuran",diff:"mudah",qi:0,score:0,streak:0,bestStreak:0,correctCount:0,best:0,q:null,input:"",feedback:null,locked:false};}
+function defaults(){return{screen:"menu",mode:"campuran",diff:"mudah",qi:0,score:0,streak:0,bestStreak:0,correctCount:0,best:0,q:null,input:"",feedback:null,locked:false,nama:"",kelas:"",saved:0,menuMsg:null};}
 var S=store.getState(defaults());
 if(S.screen==="game"){S.screen="menu";S.locked=false;S.feedback=null;}
 var timerId=null,timeLeft=TIME_PER_Q,lastKey=null;
@@ -105,6 +128,7 @@ function ri(lo,hi){return lo+rnd(hi-lo+1);}
 function pick(a){return a[rnd(a.length)];}
 function fmt(n){return n<0?"\u2212"+Math.abs(n):String(n);}
 function fmtParen(n){return n<0?"("+fmt(n)+")":String(n);}
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 function set(nx){S=Object.assign({},S,nx);store.setState(S);render();manageTimer();}
 function genQ(){
   var D=DIFFS[S.diff],op,a,b,ans;
@@ -115,12 +139,27 @@ function genQ(){
   else{b=ri(-D.mult,D.mult);if(b===0)b=1;ans=ri(-D.mult,D.mult);a=b*ans;}
   return{a:a,op:op,b:b,ans:ans};
 }
-function startGame(){set({screen:"game",qi:0,score:0,streak:0,bestStreak:0,correctCount:0,q:genQ(),input:"",feedback:null,locked:false});}
+function startGame(nama,kelas){set({screen:"game",qi:0,score:0,streak:0,bestStreak:0,correctCount:0,q:genQ(),input:"",feedback:null,locked:false,nama:nama,kelas:kelas,saved:0,menuMsg:null});}
 function nextQ(){
   if(S.qi+1>=TOTAL_Q){finishGame();return;}
   set({qi:S.qi+1,q:genQ(),input:"",feedback:null,locked:false});
 }
-function finishGame(){set({screen:"result",best:Math.max(S.best,S.score),locked:false,feedback:null});}
+function finishGame(){
+  set({screen:"result",best:Math.max(S.best,S.score),locked:false,feedback:null,saved:FB?1:3});
+  if(FB)saveScore();
+}
+function saveScore(){
+  var nama=S.nama,kelas=S.kelas,score=S.score,cc=S.correctCount,bs=S.bestStreak,mode=S.mode,diff=S.diff;
+  var acc=Math.round(cc/TOTAL_Q*100);
+  try{
+    FB.collection(SCORE_COLLECTION).add({
+      nama:nama,kelas:kelas,skor:score,benar:cc,total:TOTAL_Q,akurasi:acc,
+      mode:mode,kesulitan:diff,streakTerbaik:bs,
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    }).then(function(){if(S.screen==="result")set({saved:2});})
+     .catch(function(){if(S.screen==="result")set({saved:3});});
+  }catch(e){if(S.screen==="result")set({saved:3});}
+}
 function stopTimer(){if(timerId){clearInterval(timerId);timerId=null;}}
 function startTimer(){
   updateTimerUI();
@@ -172,11 +211,15 @@ function menuHTML(){
   var modes=[["campuran","Campuran"],["tambah","Penjumlahan"],["kurang","Pengurangan"],["kali","Perkalian"],["bagi","Pembagian"]];
   var diffs=[["mudah","Mudah"],["sedang","Sedang"],["sulit","Sulit"]];
   var h='<h2 class="ibg-title">Bilangan Bulat</h2><p class="ibg-sub">Game latihan matematika untuk anak SMP.<br>10 soal &bull; 20 detik per soal &bull; termasuk bilangan negatif!</p>';
+  h+='<div class="ibg-label">Nama Siswa</div><input id="ibg-nama" class="ibg-input" type="text" maxlength="30" placeholder="Tulis namamu..." value="'+esc(S.nama)+'">';
+  h+='<div class="ibg-label">Kelas</div><input id="ibg-kelas" class="ibg-input" type="text" maxlength="20" placeholder="Contoh: 7A" value="'+esc(S.kelas)+'">';
   h+='<div class="ibg-label">Pilih Operasi</div><div class="ibg-row">';
   h+=modes.map(function(m){return '<button class="ibg-opt'+(S.mode===m[0]?" sel":"")+'" data-act="mode" data-v="'+m[0]+'">'+m[1]+"</button>";}).join("");
   h+='</div><div class="ibg-label">Tingkat Kesulitan</div><div class="ibg-row">';
   h+=diffs.map(function(d){return '<button class="ibg-opt'+(S.diff===d[0]?" sel":"")+'" data-act="diff" data-v="'+d[0]+'">'+d[1]+"</button>";}).join("");
   h+='</div><button class="ibg-btn" data-act="start">Mulai Bermain</button>';
+  if(S.menuMsg)h+='<div class="ibg-menu-msg">'+esc(S.menuMsg)+"</div>";
+  else h+='<div class="ibg-menu-msg"></div>';
   if(S.best>0)h+='<p class="ibg-sub" style="margin:12px 0 0">Skor terbaikmu: <b>'+S.best+"</b></p>";
   return h;
 }
@@ -189,16 +232,21 @@ function gameHTML(){
   h+="</div>";
   h+='<div class="ibg-tbar"><div class="ibg-tfill" id="ibg-timerbar"></div></div>';
   h+='<div class="ibg-q'+(S.locked?" dim":"")+'">'+fmt(q.a)+' <span style="color:var(--hatch-widget-accent)">'+q.op+"</span> "+fmtParen(q.b)+" = ?</div>";
-  var disp=S.input===""?"&nbsp;":S.input.replace(/^-/,"\u2212");
+  var disp=S.input===""?"&nbsp;":esc(S.input).replace(/^-/,"\u2212");
   h+='<div class="ibg-ans">'+disp+"</div>";
   var keys=[["1","1"],["2","2"],["3","3"],["4","4"],["5","5"],["6","6"],["7","7"],["8","8"],["9","9"],["neg","\u2212"],["0","0"],["back","\u232B"]];
   h+='<div class="ibg-pad">';
   h+=keys.map(function(k){return '<button class="ibg-key" data-act="key" data-v="'+k[0]+'">'+k[1]+"</button>";}).join("");
   h+="</div>";
   h+='<button class="ibg-btn" data-act="submit" style="margin-top:10px">Jawab</button>';
-  if(S.feedback){var c=S.feedback.ok===true?"ok":(S.feedback.ok===false?"no":"hint");h+='<div class="ibg-feed '+c+'">'+S.feedback.text+"</div>";}
+  if(S.feedback){var c=S.feedback.ok===true?"ok":(S.feedback.ok===false?"no":"hint");h+='<div class="ibg-feed '+c+'">'+esc(S.feedback.text)+"</div>";}
   else h+='<div class="ibg-feed"></div>';
   return h;
+}
+function saveStatHTML(){
+  if(S.saved===2)return '<p class="ibg-savestat ok">✅ Nilai tersimpan di database</p>';
+  if(S.saved===1)return '<p class="ibg-savestat wait">⏳ Menyimpan nilai...</p>';
+  return '<p class="ibg-savestat fail">⚠️ Nilai tidak tersimpan (periksa koneksi)</p>';
 }
 function resultHTML(){
   var acc=Math.round(S.correctCount/TOTAL_Q*100),msg;
@@ -207,6 +255,8 @@ function resultHTML(){
   else if(acc>=50)msg="Bagus! Terus berlatih ya.";
   else msg="Jangan menyerah, coba lagi yuk!";
   var h='<h2 class="ibg-title">Selesai!</h2><p class="ibg-msg">'+msg+"</p>";
+  h+='<div class="ibg-namecard">👤 '+esc(S.nama)+" &bull; Kelas "+esc(S.kelas)+"</div>";
+  h+=saveStatHTML();
   h+='<div class="ibg-big">'+S.score+"</div>";
   h+='<div class="ibg-stats">';
   h+='<div class="ibg-stat"><b>'+S.correctCount+"/"+TOTAL_Q+'</b><span>Jawaban benar</span></div>';
@@ -229,11 +279,16 @@ document.getElementById("ibg-body").addEventListener("click",function(e){
   var act=el.getAttribute("data-act"),v=el.getAttribute("data-v");
   if(act==="mode")set({mode:v});
   else if(act==="diff")set({diff:v});
-  else if(act==="start")startGame();
+  else if(act==="start"){
+    var nm=document.getElementById("ibg-nama").value.trim();
+    var kl=document.getElementById("ibg-kelas").value.trim();
+    if(!nm||!kl){set({menuMsg:"Isi nama dan kelas dulu ya!"});return;}
+    startGame(nm,kl);
+  }
   else if(act==="key")keyPress(v);
   else if(act==="submit")submit();
-  else if(act==="again")startGame();
-  else if(act==="menu")set({screen:"menu",locked:false,feedback:null});
+  else if(act==="again")startGame(S.nama,S.kelas);
+  else if(act==="menu")set({screen:"menu",locked:false,feedback:null,menuMsg:null});
 });
 document.addEventListener("keydown",function(e){
   if(S.screen!=="game"||S.locked)return;

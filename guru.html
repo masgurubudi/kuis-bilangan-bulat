@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Leaderboard Guru — Kuis Bilangan Bulat</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+<style>
+:root{
+  --hatch-widget-bg:#f1f2f6;
+  --hatch-widget-surface:#ffffff;
+  --hatch-widget-surface-muted:#eef0f4;
+  --hatch-widget-text:#1c1c22;
+  --hatch-widget-muted:#6b6b76;
+  --hatch-widget-border:#e0e2e9;
+  --hatch-widget-accent:#4f46e5;
+  --hatch-widget-on-accent:#ffffff;
+  --hatch-widget-focus:#4f46e5;
+  --hatch-widget-shadow:rgba(20,20,40,.10);
+  --ibg-ok:#1f9d63;
+  --ibg-bad:#e5484d;
+  --gold:#b8860b;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --hatch-widget-bg:#0b0b10;
+    --hatch-widget-surface:#17171d;
+    --hatch-widget-surface-muted:#23232c;
+    --hatch-widget-text:#f4f4f6;
+    --hatch-widget-muted:#a2a2b0;
+    --hatch-widget-border:#34343e;
+    --hatch-widget-accent:#818cf8;
+    --hatch-widget-on-accent:#0b0b10;
+    --hatch-widget-focus:#818cf8;
+    --hatch-widget-shadow:rgba(0,0,0,.45);
+    --gold:#e8b923;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--hatch-widget-bg);
+  color:var(--hatch-widget-text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  min-height:100vh;display:flex;flex-direction:column;align-items:center;
+  padding:24px 16px;
+}
+#g-root{width:100%;max-width:760px}
+.g-card{background:var(--hatch-widget-surface);border:1px solid var(--hatch-widget-border);border-radius:18px;padding:20px;box-shadow:0 4px 18px var(--hatch-widget-shadow);margin-bottom:16px}
+.g-title{font-size:22px;font-weight:800;text-align:center;margin:0 0 4px}
+.g-sub{text-align:center;color:var(--hatch-widget-muted);font-size:13px;margin:0 0 6px;line-height:1.5}
+.g-label{font-size:12px;font-weight:700;color:var(--hatch-widget-muted);text-transform:uppercase;letter-spacing:.06em;margin:14px 0 8px}
+.g-input,.g-select{width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid var(--hatch-widget-border);background:var(--hatch-widget-surface-muted);color:var(--hatch-widget-text);font-size:15px;font-weight:600}
+.g-input:focus,.g-select:focus{outline:2px solid var(--hatch-widget-focus);outline-offset:1px;border-color:var(--hatch-widget-accent)}
+.g-btn{width:100%;padding:13px;border:none;border-radius:14px;background:var(--hatch-widget-accent);color:var(--hatch-widget-on-accent);font-size:16px;font-weight:800;cursor:pointer;margin-top:18px}
+.g-btn.ghost{background:var(--hatch-widget-surface-muted);color:var(--hatch-widget-text);border:1px solid var(--hatch-widget-border);margin-top:10px;font-size:14px;font-weight:700}
+.g-btn.small{width:auto;padding:9px 18px;font-size:13px;margin-top:0}
+.g-err{min-height:20px;text-align:center;font-weight:700;font-size:13px;color:var(--ibg-bad);margin-top:10px}
+.g-filters{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
+.g-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0 4px}
+.g-stat{background:var(--hatch-widget-surface-muted);border-radius:12px;padding:12px;text-align:center}
+.g-stat b{font-size:20px;display:block}.g-stat span{font-size:11px;color:var(--hatch-widget-muted)}
+.g-tablewrap{overflow-x:auto;margin-top:8px}
+table.g-table{width:100%;border-collapse:collapse;font-size:13px;min-width:560px}
+table.g-table th,table.g-table td{padding:9px 8px;text-align:left;border-bottom:1px solid var(--hatch-widget-border)}
+table.g-table th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--hatch-widget-muted);font-weight:800}
+table.g-table tr:last-child td{border-bottom:none}
+.g-rank{font-weight:800;width:34px;text-align:center !important}
+.g-top1{color:var(--gold)}
+.g-empty{text-align:center;color:var(--hatch-widget-muted);padding:26px 10px;font-size:14px}
+.g-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.g-note{font-size:12px;color:var(--hatch-widget-muted);text-align:center;margin-top:14px;line-height:1.5}
+button:focus-visible{outline:2px solid var(--hatch-widget-focus);outline-offset:2px}
+</style>
+</head>
+<body>
+<div id="g-root"></div>
+<script>
+(function(){
+"use strict";
+/* ===== PIN GURU — ganti sesuai keinginan ===== */
+var TEACHER_PIN="123456";
+var SCORE_COLLECTION="kuis_bilangan_bulat";
+
+var FB=null, dbOK=false;
+try{
+  firebase.initializeApp({
+    apiKey: "AIzaSyCRJo9Xou0X9K3ZGlvmArtUOod9ohR4lQk",
+    authDomain: "database-mpi-spendaka.firebaseapp.com",
+    projectId: "database-mpi-spendaka",
+    storageBucket: "database-mpi-spendaka.firebasestorage.app",
+    messagingSenderId: "909550540115",
+    appId: "1:909550540115:web:efcbb3efc2d138306bfda6"
+  });
+  FB=firebase.firestore(); dbOK=true;
+}catch(e){dbOK=false;}
+
+var root=document.getElementById("g-root");
+var authed=sessionStorage.getItem("guru_auth")==="1";
+var allRows=[],kelasFilter="all",namaSearch="",loading=false,loadError=null;
+
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function fmtDate(ts){
+  if(!ts||!ts.toDate)return "—";
+  try{return ts.toDate().toLocaleString("id-ID",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"});}catch(e){return "—";}
+}
+
+/* ---------- Layar PIN ---------- */
+function showPin(errMsg){
+  root.innerHTML=
+  '<div class="g-card" style="max-width:440px;margin:0 auto">'+
+    '<p class="g-title">🔒 Halaman Guru</p>'+
+    '<p class="g-sub">Leaderboard & rekap nilai Kuis Bilangan Bulat.<br>Masukkan PIN guru untuk melanjutkan.</p>'+
+    '<div class="g-label">PIN Guru</div>'+
+    '<input id="g-pin" class="g-input" type="password" inputmode="numeric" maxlength="12" placeholder="••••••" autocomplete="off">'+
+    '<button class="g-btn" id="g-masuk">Masuk</button>'+
+    '<div class="g-err">'+(errMsg?esc(errMsg):"")+"</div>"+
+    '<p class="g-note">Halaman ini khusus untuk guru.</p>'+
+  "</div>";
+  var inp=document.getElementById("g-pin");inp.focus();
+  function coba(){
+    if(inp.value===TEACHER_PIN){sessionStorage.setItem("guru_auth","1");authed=true;showDash();}
+    else showPin("PIN salah, coba lagi.");
+  }
+  document.getElementById("g-masuk").addEventListener("click",coba);
+  inp.addEventListener("keydown",function(e){if(e.key==="Enter")coba();});
+}
+
+/* ---------- Ambil data ---------- */
+function loadData(){
+  if(!dbOK){loadError="Koneksi database gagal. Periksa koneksi internet.";renderDash();return;}
+  loading=true;loadError=null;renderDash();
+  FB.collection(SCORE_COLLECTION).orderBy("createdAt","desc").limit(1000).get()
+    .then(function(snap){
+      allRows=[];
+      snap.forEach(function(d){
+        var v=d.data();
+        allRows.push({
+          nama:String(v.nama||"—"),kelas:String(v.kelas||"—"),
+          skor:Number(v.skor||0),benar:Number(v.benar||0),total:Number(v.total||0),
+          akurasi:Number(v.akurasi||0),mode:String(v.mode||"campuran"),
+          createdAt:v.createdAt||null
+        });
+      });
+      buildKelasOptions();loading=false;renderDash();
+    })
+    .catch(function(err){
+      loading=false;
+      loadError="Gagal memuat data. Pastikan Firestore Database sudah dibuat dan rules sudah dipasang. ("+err.code+")";
+      renderDash();
+    });
+}
+function uniqueKelas(){
+  var s={},out=[];
+  allRows.forEach(function(r){if(!s[r.kelas]){s[r.kelas]=1;out.push(r.kelas);}});
+  return out.sort();
+}
+function buildKelasOptions(){
+  var sel=document.getElementById("g-kelas");
+  if(!sel)return;
+  var opts='<option value="all">Semua Kelas</option>'+uniqueKelas().map(function(k){
+    return '<option value="'+esc(k)+'"'+(kelasFilter===k?" selected":"")+">Kelas "+esc(k)+"</option>";
+  }).join("");
+  sel.innerHTML=opts;
+}
+function filteredRows(){
+  return allRows.filter(function(r){
+    if(kelasFilter!=="all"&&r.kelas!==kelasFilter)return false;
+    if(namaSearch&&r.nama.toLowerCase().indexOf(namaSearch.toLowerCase())<0)return false;
+    return true;
+  });
+}
+function leaderboard(){
+  var map={},rows=filteredRows();
+  rows.forEach(function(r){
+    var key=r.nama.toLowerCase().trim()+"|"+r.kelas.toLowerCase().trim();
+    if(!map[key]||r.skor>map[key].skor)map[key]=r;
+  });
+  var arr=Object.keys(map).map(function(k){return map[k];});
+  arr.sort(function(a,b){return b.skor-a.skor||b.akurasi-a.akurasi;});
+  return arr.slice(0,10);
+}
+
+/* ---------- Dashboard ---------- */
+function showDash(){loadData();}
+function renderDash(){
+  if(!authed){showPin();return;}
+  var rows=filteredRows(),lb=leaderboard();
+  var siswaUnik={},totSkor=0;
+  rows.forEach(function(r){siswaUnik[r.nama.toLowerCase().trim()+"|"+r.kelas]=1;totSkor+=r.skor;});
+  var nSiswa=Object.keys(siswaUnik).length;
+  var avg=rows.length?Math.round(totSkor/rows.length):0;
+
+  var h='<div class="g-card">'+
+    '<div class="g-head"><div><p class="g-title" style="text-align:left">🏆 Leaderboard Guru</p>'+
+    '<p class="g-sub" style="text-align:left">Kuis Bilangan Bulat — rekap nilai siswa</p></div>'+
+    '<div><button class="g-btn small" id="g-refresh">↻ Muat Ulang</button> '+
+    '<button class="g-btn small ghost" id="g-keluar" style="margin-top:0">Keluar</button></div></div>'+
+    '<div class="g-filters">'+
+      '<div><div class="g-label">Filter Kelas</div><select id="g-kelas" class="g-select"><option value="all">Semua Kelas</option></select></div>'+
+      '<div><div class="g-label">Cari Nama</div><input id="g-cari" class="g-input" type="text" placeholder="Ketik nama..." value="'+esc(namaSearch)+'"></div>'+
+    "</div>"+
+    '<div class="g-stats">'+
+      '<div class="g-stat"><b>'+rows.length+'</b><span>Percobaan</span></div>'+
+      '<div class="g-stat"><b>'+nSiswa+'</b><span>Siswa</span></div>'+
+      '<div class="g-stat"><b>'+avg+'</b><span>Rata-rata skor</span></div>'+
+    "</div>"+
+  "</div>";
+
+  h+='<div class="g-card"><p class="g-title" style="font-size:18px">🥇 Peringkat Teratas</p>'+
+     '<p class="g-sub">Skor terbaik tiap siswa'+(kelasFilter!=="all"?" — Kelas "+esc(kelasFilter):"")+"</p>";
+  if(loading)h+='<div class="g-empty">⏳ Memuat data...</div>';
+  else if(loadError)h+='<div class="g-empty">⚠️ '+esc(loadError)+"</div>";
+  else if(!lb.length)h+='<div class="g-empty">Belum ada data nilai.<br>Siswa yang sudah bermain akan muncul di sini.</div>';
+  else{
+    h+='<div class="g-tablewrap"><table class="g-table"><tr><th class="g-rank">#</th><th>Nama</th><th>Kelas</th><th>Skor</th><th>Akurasi</th></tr>';
+    lb.forEach(function(r,i){
+      var medal=i===0?"🥇":i===1?"🥈":i===2?"🥉":(i+1);
+      h+="<tr><td class=\"g-rank"+(i===0?" g-top1":"")+"\">"+medal+"</td><td><b>"+esc(r.nama)+"</b></td><td>"+esc(r.kelas)+"</td><td><b>"+r.skor+"</b></td><td>"+r.akurasi+"%</td></tr>";
+    });
+    h+="</table></div>";
+  }
+  h+="</div>";
+
+  h+='<div class="g-card"><p class="g-title" style="font-size:18px">📋 Rekap Semua Nilai</p>';
+  if(loading)h+='<div class="g-empty">⏳ Memuat data...</div>';
+  else if(loadError)h+='<div class="g-empty">⚠️ '+esc(loadError)+"</div>";
+  else if(!rows.length)h+='<div class="g-empty">Belum ada data.</div>';
+  else{
+    h+='<div class="g-tablewrap"><table class="g-table"><tr><th class="g-rank">#</th><th>Nama</th><th>Kelas</th><th>Skor</th><th>Benar</th><th>Akurasi</th><th>Mode</th><th>Waktu</th></tr>';
+    rows.forEach(function(r,i){
+      h+="<tr><td class=\"g-rank\">"+(i+1)+"</td><td>"+esc(r.nama)+"</td><td>"+esc(r.kelas)+"</td><td><b>"+r.skor+"</b></td><td>"+r.benar+"/"+r.total+"</td><td>"+r.akurasi+"%</td><td>"+esc(r.mode)+"</td><td>"+esc(fmtDate(r.createdAt))+"</td></tr>";
+    });
+    h+="</table></div>";
+  }
+  h+='<p class="g-note">Menampilkan '+rows.length+' dari '+allRows.length+' percobaan tersimpan.</p></div>';
+
+  root.innerHTML=h;
+  buildKelasOptions();
+  document.getElementById("g-kelas").addEventListener("change",function(e){kelasFilter=e.target.value;renderDash();});
+  var cari=document.getElementById("g-cari");
+  cari.addEventListener("input",function(e){namaSearch=e.target.value;renderDash();var c2=document.getElementById("g-cari");c2.focus();c2.setSelectionRange(c2.value.length,c2.value.length);});
+  document.getElementById("g-refresh").addEventListener("click",loadData);
+  document.getElementById("g-keluar").addEventListener("click",function(){sessionStorage.removeItem("guru_auth");authed=false;showPin();});
+}
+
+if(authed)showDash();else showPin();
+})();
+</script>
+</body>
+</html>
