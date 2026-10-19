@@ -93,7 +93,13 @@ button:focus-visible{outline:2px solid var(--hatch-widget-focus);outline-offset:
 "use strict";
 /* ===== PIN MASTER (admin kabupaten) — ganti sesuai keinginan ===== */
 var MASTER_PIN="112233";
-var SCORE_COLLECTION="kuis_bilangan_bulat";
+var GAMES=[
+ {id:"bilangan",label:"Bilangan Bulat",col:"kuis_bilangan_bulat",icon:"🔢"},
+ {id:"literasi",label:"Literasi & Numerasi",col:"kuis_literasi_numerasi",icon:"📖"}
+];
+var gameIdx=0;
+function curCol(){return GAMES[gameIdx].col;}
+function curGame(){return GAMES[gameIdx];}
 /* Daftar SMP se-Kabupaten Pacitan (nama, NPSN, kecamatan) */
 var SCHOOLS=[
 ["SMP NEGERI 1 PACITAN","20510976","Pacitan"],
@@ -250,7 +256,7 @@ function showLogin(errMsg){
   root.innerHTML=
   '<div class="g-card" style="max-width:480px;margin:0 auto">'+
     '<p class="g-title">🔒 Halaman Guru</p>'+
-    '<p class="g-sub">Leaderboard & rekap nilai Kuis Bilangan Bulat<br>se-Kabupaten Pacitan.</p>'+
+    '<p class="g-sub">Leaderboard & rekap nilai kuis<br>se-Kabupaten Pacitan.</p>'+
     '<div class="g-label">Sekolah Anda</div>'+
     schoolComboHTML("g","Ketik untuk cari sekolah...","")+
     '<div class="g-label">NPSN Sekolah / PIN Master</div>'+
@@ -280,7 +286,7 @@ function persist(){try{sessionStorage.setItem("guru_auth",JSON.stringify(auth));
 function loadData(){
   if(!dbOK){loadError="Koneksi database gagal. Periksa koneksi internet.";renderDash();return;}
   loading=true;loadError=null;renderDash();
-  FB.collection(SCORE_COLLECTION).orderBy("createdAt","desc").limit(2000).get()
+  FB.collection(curCol()).orderBy("createdAt","desc").limit(2000).get()
     .then(function(snap){
       allRows=[];
       snap.forEach(function(d){
@@ -439,10 +445,14 @@ function renderDash(){
 
   var h='<div class="g-card">'+
     '<div class="g-head"><div><p class="g-title" style="text-align:left">🏆 Leaderboard Guru</p>'+
-    '<p class="g-sub" style="text-align:left">Kuis Bilangan Bulat — se-Kabupaten Pacitan</p>'+
+    '<p class="g-sub" style="text-align:left">Kuis '+esc(curGame().label)+" — se-Kabupaten Pacitan</p>"+
     '<span class="g-role">'+esc(roleLabel)+"</span></div>"+
     '<div><button class="g-btn small" id="g-refresh">↻ Muat Ulang</button> '+
     '<button class="g-btn small ghost" id="g-keluar" style="margin-top:0">Keluar</button></div></div>'+
+    '<div class="g-label">Pilih Game</div>'+
+    '<div class="g-tabs" style="margin-top:0">'+
+      GAMES.map(function(g,i){return '<button class="g-btn tab'+(i===gameIdx?"":" off")+'" data-game="'+i+'">'+g.icon+" "+g.label+"</button>";}).join("")+
+    "</div>"+
     '<div class="g-tabs">'+
       '<button class="g-btn tab'+(tab==="sekolah"?"":" off")+'" id="g-tabsekolah">'+tabSekolah+"</button>"+
       '<button class="g-btn tab'+(tab==="kab"?"":" off")+'" id="g-tabkab">🌍 Rekap Kabupaten</button>'+
@@ -454,6 +464,10 @@ function renderDash(){
 
   document.getElementById("g-tabsekolah").addEventListener("click",function(){tab="sekolah";renderDash();});
   document.getElementById("g-tabkab").addEventListener("click",function(){tab="kab";renderDash();});
+  var gbtns=root.querySelectorAll("[data-game]");
+  for(var gi=0;gi<gbtns.length;gi++)(function(b){
+    b.addEventListener("click",function(){gameIdx=parseInt(b.getAttribute("data-game"),10);tab="sekolah";loadData();});
+  })(gbtns[gi]);
   document.getElementById("g-refresh").addEventListener("click",loadData);
   document.getElementById("g-keluar").addEventListener("click",function(){try{sessionStorage.removeItem("guru_auth");}catch(e){}auth=null;showLogin();});
   var ask=document.getElementById("ga-sekolah-input");
