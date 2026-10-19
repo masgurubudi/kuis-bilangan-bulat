@@ -88,6 +88,7 @@ body{
 .ibg-savestat{text-align:center;font-size:13px;font-weight:700;margin:6px 0 0}
 .ibg-savestat.ok{color:var(--ibg-ok)}.ibg-savestat.wait{color:var(--hatch-widget-muted)}.ibg-savestat.fail{color:var(--ibg-bad)}
 .ibg-menu-msg{min-height:20px;text-align:center;font-weight:700;font-size:13px;color:var(--ibg-bad);margin-top:10px}
+.ibg-credit{text-align:center;color:var(--hatch-widget-muted);font-size:12px;font-weight:600;margin:10px 0 0}
 .ibg-foot{margin-top:16px;font-size:12px;color:var(--hatch-widget-muted);text-align:center}
 button:focus-visible{outline:2px solid var(--hatch-widget-focus);outline-offset:2px}
 </style>
@@ -343,6 +344,7 @@ function menuHTML(){
   h+='</div><button class="ibg-btn" data-act="start">Mulai Bermain</button>';
   if(S.menuMsg)h+='<div class="ibg-menu-msg">'+esc(S.menuMsg)+"</div>";
   else h+='<div class="ibg-menu-msg"></div>';
+  h+='<p class="ibg-credit">Dibuat oleh MGMP Matematika SMP Kabupaten Pacitan</p>';
   if(S.best>0)h+='<p class="ibg-sub" style="margin:12px 0 0">Skor terbaikmu: <b>'+S.best+"</b></p>";
   return h;
 }
