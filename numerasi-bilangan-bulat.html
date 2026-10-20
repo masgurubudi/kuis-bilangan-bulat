@@ -189,56 +189,65 @@ var SCHOOLS=[
 ["SMP PGRI ARJOSARI","20511079","Arjosari"]
 ];
 
-/* ===== Bank soal: cerita singkat bilangan bulat + 1 pertanyaan ===== */
+/* ===== Bank soal: cerita singkat bilangan bulat, bertingkat mudah-sedang-sulit ===== */
 var BANK=[
-{stim:"Suhu di puncak gunung pada malam hari −5°C. Pada siang hari suhu naik 12°C.",
+/* --- MUDAH --- */
+{d:"mudah",stim:"Suhu udara di Dieng pada pagi hari 18°C. Pada siang hari suhunya naik 9°C.",
  q:"Berapa suhu udara pada siang hari?",
- a:["7°C","17°C","−17°C","−7°C"],c:0},
-{stim:"Andi berutang Rp15.000,00 kepada Budi. Kemudian Andi membayar Rp10.000,00.",
+ a:["27°C","25°C","9°C","20°C"],c:0},
+{d:"mudah",stim:"Andi berutang Rp15.000,00 kepada Budi. Kemudian Andi membayar Rp10.000,00.",
  q:"Berapa sisa utang Andi?",
  a:["Rp5.000,00","Rp25.000,00","Rp10.000,00","Rp15.000,00"],c:0},
-{stim:"Seseorang naik lift dari lantai 2, lalu turun 4 lantai. (Lantai basement dihitung negatif.)",
- q:"Di lantai berapa ia sekarang?",
- a:["Basement 2","Lantai 2","Basement 4","Lantai 6"],c:0},
-{stim:"Dalam kuis, jawaban benar bernilai 10, jawaban salah −5, dan tidak dijawab 0. Rina menjawab 8 benar dan 2 salah.",
- q:"Berapa skor Rina?",
- a:["70","90","60","80"],c:0},
-{stim:"Seekor ikan berada 8 meter di bawah permukaan laut. Kemudian ikan itu naik 5 meter.",
- q:"Di mana posisi ikan sekarang?",
- a:["3 meter di bawah permukaan laut","13 meter di bawah permukaan laut","5 meter di bawah permukaan laut","3 meter di atas permukaan laut"],c:0},
-{stim:"Suhu awal sebuah ruangan 3°C. AC dinyalakan sehingga suhu turun 8°C.",
- q:"Berapa suhu ruangan sekarang?",
- a:["−5°C","5°C","11°C","−11°C"],c:0},
-{stim:"Burung terbang 12 meter di atas permukaan laut, sedangkan ikan berenang 7 meter di bawah permukaan laut.",
- q:"Berapa jarak vertikal antara burung dan ikan?",
- a:["19 meter","5 meter","12 meter","7 meter"],c:0},
-{stim:"Bagas memiliki 25 kelereng. Ia kalah 18 kelereng, lalu menang 12 kelereng.",
- q:"Berapa kelereng Bagas sekarang?",
- a:["19","31","5","43"],c:0},
-{stim:"Es batu bersuhu −4°C. Setelah didiamkan beberapa saat, suhunya naik 6°C.",
+{d:"mudah",stim:"Es batu bersuhu −4°C. Setelah didiamkan beberapa saat, suhunya naik 6°C.",
  q:"Berapa suhu es sekarang?",
  a:["2°C","−10°C","10°C","−2°C"],c:0},
-{stim:"Nilai awal lomba adalah 100. Setiap jawaban salah dikurangi 15. Doni salah 3 kali dan selebihnya benar.",
+{d:"mudah",stim:"Seseorang naik lift dari lantai 2, lalu turun 4 lantai. (Lantai basement dihitung negatif.)",
+ q:"Di lantai berapa ia sekarang?",
+ a:["Basement 2","Lantai 2","Basement 4","Lantai 6"],c:0},
+{d:"mudah",stim:"Bagas memiliki 25 kelereng. Dalam permainan pertama ia kalah 18 kelereng.",
+ q:"Berapa kelereng Bagas sekarang?",
+ a:["7","43","18","15"],c:0},
+{d:"mudah",stim:"Suhu awal sebuah ruangan 3°C. AC dinyalakan sehingga suhu turun 8°C.",
+ q:"Berapa suhu ruangan sekarang?",
+ a:["−5°C","5°C","11°C","−11°C"],c:0},
+/* --- SEDANG --- */
+{d:"sedang",stim:"Dalam kuis, jawaban benar bernilai 10, jawaban salah −5, dan tidak dijawab 0. Rina menjawab 8 benar dan 2 salah.",
+ q:"Berapa skor Rina?",
+ a:["70","90","60","80"],c:0},
+{d:"sedang",stim:"Seekor ikan berada 8 meter di bawah permukaan laut. Kemudian ikan itu naik 5 meter.",
+ q:"Di mana posisi ikan sekarang?",
+ a:["3 meter di bawah permukaan laut","13 meter di bawah permukaan laut","5 meter di bawah permukaan laut","3 meter di atas permukaan laut"],c:0},
+{d:"sedang",stim:"Burung terbang 12 meter di atas permukaan laut, sedangkan ikan berenang 7 meter di bawah permukaan laut.",
+ q:"Berapa jarak vertikal antara burung dan ikan?",
+ a:["19 meter","5 meter","12 meter","7 meter"],c:0},
+{d:"sedang",stim:"Nilai awal lomba adalah 100. Setiap jawaban salah dikurangi 15. Doni salah 3 kali dan selebihnya benar.",
  q:"Berapa nilai Doni?",
  a:["55","85","70","45"],c:0},
-{stim:"Pak Rudi berutang Rp100.000,00. Ia membayar Rp40.000,00, lalu berutang lagi Rp25.000,00.",
- q:"Berapa utang Pak Rudi sekarang?",
- a:["Rp85.000,00","Rp35.000,00","Rp115.000,00","Rp65.000,00"],c:0},
-{stim:"Sebuah mobil parkir di basement 2 (lantai −2), lalu naik 6 lantai.",
- q:"Di lantai berapa mobil itu sekarang?",
- a:["Lantai 4","Lantai 8","Basement 4","Lantai 6"],c:0},
-{stim:"Suhu di Moskow −10°C, sedangkan suhu di Jakarta 32°C.",
- q:"Berapa selisih suhu kedua kota tersebut?",
- a:["42°C","22°C","−42°C","32°C"],c:0},
-{stim:"Pesawat terbang pada ketinggian 1.200 meter, lalu turun 450 meter.",
+{d:"sedang",stim:"Pesawat terbang pada ketinggian 1.200 meter, lalu turun 450 meter.",
  q:"Berapa ketinggian pesawat sekarang?",
  a:["750 meter","1.650 meter","450 meter","850 meter"],c:0},
-{stim:"Sinta mempunyai tabungan Rp50.000,00. Ia membeli buku seharga Rp65.000,00 sehingga saldonya menjadi negatif.",
+{d:"sedang",stim:"Sebuah mobil parkir di basement 2 (lantai −2), lalu naik 6 lantai.",
+ q:"Di lantai berapa mobil itu sekarang?",
+ a:["Lantai 4","Lantai 8","Basement 4","Lantai 6"],c:0},
+/* --- SULIT --- */
+{d:"sulit",stim:"Pak Rudi berutang Rp100.000,00. Ia membayar Rp40.000,00, lalu berutang lagi Rp25.000,00.",
+ q:"Berapa utang Pak Rudi sekarang?",
+ a:["Rp85.000,00","Rp35.000,00","Rp115.000,00","Rp65.000,00"],c:0},
+{d:"sulit",stim:"Sinta mempunyai tabungan Rp50.000,00. Ia membeli buku seharga Rp65.000,00 sehingga saldonya menjadi negatif.",
  q:"Berapa saldo tabungan Sinta sekarang?",
  a:["−Rp15.000,00","Rp15.000,00","−Rp115.000,00","Rp115.000,00"],c:0},
-{stim:"Pada permainan kartu, Anto mendapat −20 poin pada babak pertama dan 35 poin pada babak kedua.",
+{d:"sulit",stim:"Pada permainan kartu, Anto mendapat −20 poin pada babak pertama dan 35 poin pada babak kedua.",
  q:"Berapa total poin Anto?",
- a:["15 poin","−55 poin","55 poin","−15 poin"],c:0}
+ a:["15 poin","−55 poin","55 poin","−15 poin"],c:0},
+{d:"sulit",stim:"Suhu di Moskow −10°C, sedangkan suhu di Jakarta 32°C.",
+ q:"Berapa selisih suhu kedua kota tersebut?",
+ a:["42°C","22°C","−42°C","32°C"],c:0},
+{d:"sulit",stim:"Suhu di dalam freezer mula-mula −8°C. Listrik padam sehingga suhu naik 11°C, lalu setelah listrik menyala suhu turun 6°C.",
+ q:"Berapa suhu freezer sekarang?",
+ a:["−3°C","3°C","−13°C","9°C"],c:0},
+{d:"sulit",stim:"Dalam lomba cerdas cermat, jawaban benar bernilai 10 dan jawaban salah −5. Tim Bima menjawab 6 benar, 3 salah, dan 1 tidak dijawab.",
+ q:"Berapa skor Tim Bima?",
+ a:["45","75","60","30"],c:0}
 ];
 
 var TOTAL_Q=10;
@@ -297,6 +306,16 @@ document.addEventListener("click",function(e){
 });
 
 /* ---- Alur game ---- */
+/* Susun 10 soal: 4 mudah + 3 sedang + 3 sulit, urut dari mudah ke sulit */
+function buildQuiz(){
+  function ambil(level,n){
+    return shuffle(BANK.filter(function(q){return q.d===level;})).slice(0,n);
+  }
+  return ambil("mudah",4).concat(ambil("sedang",3),ambil("sulit",3)).map(function(q){
+    var order=shuffle([0,1,2,3]);
+    return{stim:q.stim,q:q.q,opts:order.map(function(i){return q.a[i];}),c:order.indexOf(q.c)};
+  });
+}
 function showStart(){
   root.innerHTML=
   '<h2 class="ibg-title">🔢 Numerasi Bilangan Bulat</h2>'+
@@ -316,10 +335,7 @@ function showStart(){
     var sk=resolveSchool();
     if(!nm||!kl||!sk){menuMsg="Isi nama, kelas, dan pilih sekolah dari daftar ya!";showStart();return;}
     player.nama=nm;player.kelas=kl;player.sekolah=sk;menuMsg=null;saveState();
-    quiz=shuffle(BANK).slice(0,TOTAL_Q).map(function(q){
-      var order=shuffle([0,1,2,3]);
-      return{stim:q.stim,q:q.q,opts:order.map(function(i){return q.a[i];}),c:order.indexOf(q.c)};
-    });
+    quiz=buildQuiz();
     idx=0;score=0;saved=0;showQ();
   });
 }
@@ -399,10 +415,7 @@ function renderResult(){
   '<button class="ibg-btn ghost" id="ibg-home">Ganti Nama / Sekolah</button>'+
   '<p class="ibg-credit">Dibuat oleh MGMP Matematika SMP Kabupaten Pacitan</p>';
   document.getElementById("ibg-again").addEventListener("click",function(){
-    quiz=shuffle(BANK).slice(0,TOTAL_Q).map(function(q){
-      var order=shuffle([0,1,2,3]);
-      return{stim:q.stim,q:q.q,opts:order.map(function(i){return q.a[i];}),c:order.indexOf(q.c)};
-    });
+    quiz=buildQuiz();
     idx=0;score=0;saved=0;showQ();
   });
   document.getElementById("ibg-home").addEventListener("click",showStart);
