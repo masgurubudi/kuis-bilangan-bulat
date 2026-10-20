@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Game Bangun Ruang — Latihan Matematika SMP</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+<style>
+:root{
+  --hatch-widget-bg:#f1f2f6;
+  --hatch-widget-surface:#ffffff;
+  --hatch-widget-surface-muted:#eef0f4;
+  --hatch-widget-text:#1c1c22;
+  --hatch-widget-muted:#6b6b76;
+  --hatch-widget-border:#e0e2e9;
+  --hatch-widget-accent:#4f46e5;
+  --hatch-widget-on-accent:#ffffff;
+  --hatch-widget-focus:#4f46e5;
+  --hatch-widget-shadow:rgba(20,20,40,.10);
+  --ibg-ok:#1f9d63;
+  --ibg-bad:#e5484d;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --hatch-widget-bg:#0b0b10;
+    --hatch-widget-surface:#17171d;
+    --hatch-widget-surface-muted:#23232c;
+    --hatch-widget-text:#f4f4f6;
+    --hatch-widget-muted:#a2a2b0;
+    --hatch-widget-border:#34343e;
+    --hatch-widget-accent:#818cf8;
+    --hatch-widget-on-accent:#0b0b10;
+    --hatch-widget-focus:#818cf8;
+    --hatch-widget-shadow:rgba(0,0,0,.45);
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--hatch-widget-bg);
+  color:var(--hatch-widget-text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:24px 16px;
+}
+#ibg-root{width:100%;max-width:440px}
+.ibg-card{background:var(--hatch-widget-surface);border:1px solid var(--hatch-widget-border);border-radius:18px;padding:20px;box-shadow:0 4px 18px var(--hatch-widget-shadow)}
+.ibg-title{font-size:22px;font-weight:800;text-align:center;margin:0 0 4px}
+.ibg-sub{text-align:center;color:var(--hatch-widget-muted);font-size:13px;margin:0 0 6px;line-height:1.5}
+.ibg-label{font-size:12px;font-weight:700;color:var(--hatch-widget-muted);text-transform:uppercase;letter-spacing:.06em;margin:14px 0 8px}
+.ibg-input{width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid var(--hatch-widget-border);background:var(--hatch-widget-surface-muted);color:var(--hatch-widget-text);font-size:15px;font-weight:600;margin-bottom:2px}
+.ibg-input:focus{outline:2px solid var(--hatch-widget-focus);outline-offset:1px;border-color:var(--hatch-widget-accent)}
+.ibg-dd{position:relative}
+.ibg-ddlist{position:absolute;top:100%;left:0;right:0;max-height:260px;overflow-y:auto;background:var(--hatch-widget-surface);border:1.5px solid var(--hatch-widget-border);border-radius:12px;margin-top:4px;z-index:50;display:none;box-shadow:0 8px 24px var(--hatch-widget-shadow)}
+.ibg-dditem{padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--hatch-widget-border)}
+.ibg-dditem:last-child{border-bottom:none}
+.ibg-dditem b{display:block;font-size:14px}
+.ibg-dditem span{font-size:11px;color:var(--hatch-widget-muted)}
+.ibg-dditem:active{background:var(--hatch-widget-surface-muted)}
+.ibg-ddempty{padding:14px;text-align:center;color:var(--hatch-widget-muted);font-size:13px}
+.ibg-row{display:flex;flex-wrap:wrap;gap:8px}
+.ibg-opt{flex:1 1 28%;min-width:80px;padding:10px 6px;border-radius:12px;border:1.5px solid var(--hatch-widget-border);background:var(--hatch-widget-surface-muted);color:var(--hatch-widget-text);font-size:13px;font-weight:600;cursor:pointer;text-align:center}
+.ibg-opt.sel{border-color:var(--hatch-widget-accent);background:var(--hatch-widget-accent);color:var(--hatch-widget-on-accent)}
+.ibg-btn{width:100%;padding:13px;border:none;border-radius:14px;background:var(--hatch-widget-accent);color:var(--hatch-widget-on-accent);font-size:16px;font-weight:800;cursor:pointer;margin-top:18px}
+.ibg-btn.ghost{background:var(--hatch-widget-surface-muted);color:var(--hatch-widget-text);border:1px solid var(--hatch-widget-border);margin-top:10px;font-size:14px;font-weight:700}
+.ibg-top{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--hatch-widget-muted);margin-bottom:8px}
+.ibg-score{font-weight:800;color:var(--hatch-widget-text);font-size:15px}
+.ibg-pbar{height:8px;background:var(--hatch-widget-surface-muted);border-radius:99px;overflow:hidden;margin-bottom:4px}
+.ibg-pfill{height:100%;background:var(--hatch-widget-accent);border-radius:99px}
+.ibg-tbar{height:8px;background:var(--hatch-widget-surface-muted);border-radius:99px;overflow:hidden;margin-bottom:12px}
+.ibg-tfill{height:100%;width:100%;background:var(--hatch-widget-accent);border-radius:99px}
+.ibg-q{font-size:42px;font-weight:800;text-align:center;margin:12px 0;letter-spacing:1px}
+.ibg-q.dim{opacity:.4}
+.ibg-ans{min-height:54px;border:2px dashed var(--hatch-widget-border);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800;margin-bottom:4px}
+.ibg-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.ibg-key{padding:13px 0;border-radius:12px;border:1px solid var(--hatch-widget-border);background:var(--hatch-widget-surface-muted);color:var(--hatch-widget-text);font-size:20px;font-weight:700;cursor:pointer}
+.ibg-key:active{transform:scale(.96)}
+.ibg-feed{min-height:24px;text-align:center;font-weight:700;font-size:14px;margin-top:10px;line-height:1.4}
+.ibg-feed.ok{color:var(--ibg-ok)}.ibg-feed.no{color:var(--ibg-bad)}.ibg-feed.hint{color:var(--hatch-widget-muted)}
+.ibg-streak{display:inline-block;background:var(--hatch-widget-surface-muted);border:1px solid var(--hatch-widget-border);border-radius:99px;padding:3px 12px;font-size:12px;font-weight:700;color:var(--hatch-widget-text)}
+.ibg-big{font-size:50px;font-weight:800;text-align:center;margin:6px 0}
+.ibg-msg{text-align:center;color:var(--hatch-widget-muted);font-size:14px;margin:0 0 4px;line-height:1.5}
+.ibg-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0 4px}
+.ibg-stat{background:var(--hatch-widget-surface-muted);border-radius:12px;padding:12px;text-align:center}
+.ibg-stat b{font-size:20px;display:block}.ibg-stat span{font-size:11px;color:var(--hatch-widget-muted)}
+.ibg-namecard{text-align:center;background:var(--hatch-widget-surface-muted);border-radius:12px;padding:10px;margin:10px 0 4px;font-size:15px;font-weight:700}
+.ibg-savestat{text-align:center;font-size:13px;font-weight:700;margin:6px 0 0}
+.ibg-savestat.ok{color:var(--ibg-ok)}.ibg-savestat.wait{color:var(--hatch-widget-muted)}.ibg-savestat.fail{color:var(--ibg-bad)}
+.ibg-menu-msg{min-height:20px;text-align:center;font-weight:700;font-size:13px;color:var(--ibg-bad);margin-top:10px}
+.ibg-credit{text-align:center;color:var(--hatch-widget-muted);font-size:12px;font-weight:600;margin:10px 0 0}
+.ibg-foot{margin-top:16px;font-size:12px;color:var(--hatch-widget-muted);text-align:center}
+button:focus-visible{outline:2px solid var(--hatch-widget-focus);outline-offset:2px}
+</style>
+</head>
+<body>
+<div id="ibg-root">
+  <div class="ibg-card" id="ibg-body"></div>
+  <p class="ibg-foot">Game Bilangan Bulat &bull; Latihan penjumlahan, pengurangan, perkalian &amp; pembagian untuk anak SMP</p>
+</div>
+<script>
+(function(){
+"use strict";
+/* ===== Firebase (database nilai) ===== */
+var FB=null;
+try{
+  firebase.initializeApp({
+    apiKey: "AIzaSyCRJo9Xou0X9K3ZGlvmArtUOod9ohR4lQk",
+    authDomain: "database-mpi-spendaka.firebaseapp.com",
+    projectId: "database-mpi-spendaka",
+    storageBucket: "database-mpi-spendaka.firebasestorage.app",
+    messagingSenderId: "909550540115",
+    appId: "1:909550540115:web:efcbb3efc2d138306bfda6"
+  });
+  FB=firebase.firestore();
+}catch(e){FB=null;}
+var SCORE_COLLECTION="kuis_bangun_ruang";
+/* Daftar SMP se-Kabupaten Pacitan (nama, NPSN, kecamatan) — sumber: data publik Kemendikdasmen 2026 */
+var SCHOOLS=[
+["SMP NEGERI 1 PACITAN","20510976","Pacitan"],
+["SMP NEGERI 2 PACITAN","20510956","Pacitan"],
+["SMP NEGERI 3 PACITAN","20510947","Pacitan"],
+["SMP NEGERI 4 PACITAN","20510949","Pacitan"],
+["SMP NEGERI 5 PACITAN SATU ATAP","20570232","Pacitan"],
+["SMP PGRI PACITAN","20511063","Pacitan"],
+["SMP ISLAM TERPADU AR-RAHMAH","20574716","Pacitan"],
+["SMP MODEL AL-ISTIQOMAH PACITAN","20555834","Pacitan"],
+["SMP ISLAM NAHDLATUSSUBBAN","20570463","Pacitan"],
+["SMP NEGERI 1 KEBONAGUNG","20510967","Kebonagung"],
+["SMP NEGERI 2 KEBONAGUNG","20510969","Kebonagung"],
+["SMP NEGERI 3 KEBONAGUNG SATU ATAP","20573297","Kebonagung"],
+["SMP PGRI KEBONAGUNG","20511075","Kebonagung"],
+["SMP NEGERI 1 PUNUNG","20510974","Punung"],
+["SMP NEGERI 2 PUNUNG","20510944","Punung"],
+["SMP NEGERI 3 PUNUNG","20510954","Punung"],
+["SMP NEGERI 1 PRINGKUKU","20510975","Pringkuku"],
+["SMP NEGERI 2 PRINGKUKU","20510945","Pringkuku"],
+["SMP NEGERI 3 PRINGKUKU","20510955","Pringkuku"],
+["SMP PGRI SUGIHWARAS","20510965","Pringkuku"],
+["SMP MUHAMMADIYAH BOARDING SCHOOL PRINGKUKU","70014702","Pringkuku"],
+["SMP NEGERI 1 DONOROJO","20510959","Donorojo"],
+["SMP NEGERI 2 DONOROJO","20510970","Donorojo"],
+["SMP NEGERI 3 DONOROJO","20510939","Donorojo"],
+["SMP NEGERI 4 DONOROJO SATU ATAP","20540380","Donorojo"],
+["SMP PGRI GENDARAN","20511077","Donorojo"],
+["SMP NEGERI 1 NAWANGAN","20510968","Nawangan"],
+["SMP NEGERI 2 NAWANGAN","20510958","Nawangan"],
+["SMP NEGERI 3 NAWANGAN","20510938","Nawangan"],
+["SMP NEGERI 4 NAWANGAN","20510950","Nawangan"],
+["SMP PGRI GONDANG","20511076","Nawangan"],
+["SMP ISLAM TERPADU AL BANNA NAWANGAN","70004101","Nawangan"],
+["SMP NEGERI 1 BANDAR","20510960","Bandar"],
+["SMP NEGERI 2 BANDAR","20510971","Bandar"],
+["SMP NEGERI 3 BANDAR","20510940","Bandar"],
+["SMP NEGERI 4 BANDAR SATU ATAP","20557250","Bandar"],
+["SMP ISLAM TERPADU MA ARIF BANDAR","69760669","Bandar"],
+["SMP PGRI BANDAR","20511078","Bandar"],
+["SMP NEGERI 1 TEGALOMBO","20511021","Tegalombo"],
+["SMP NEGERI 2 TEGALOMBO","20510942","Tegalombo"],
+["SMP NEGERI 3 TEGALOMBO","20510952","Tegalombo"],
+["SMP NEGERI 4 TEGALOMBO SATU ATAP","20573296","Tegalombo"],
+["SMP NEGERI 5 TEGALOMBO SATU ATAP","69766201","Tegalombo"],
+["SMP HASYIM ASY'ARI KASIHAN","20570231","Tegalombo"],
+["SMP MUHAMMADIYAH 3","20511081","Tegalombo"],
+["SMP PGRI TEGALOMBO","20510964","Tegalombo"],
+["SMP NEGERI 1 TULAKAN","20511009","Tulakan"],
+["SMP NEGERI 2 TULAKAN","20510941","Tulakan"],
+["SMP NEGERI 3 TULAKAN","20510951","Tulakan"],
+["SMP NEGERI 4 TULAKAN","20510948","Tulakan"],
+["SMP HASYIM ASY ARI TULAKAN","20511064","Tulakan"],
+["SMP MUHAMMADIYAH 2 TULAKAN","20511073","Tulakan"],
+["SMP PGRI MONTONGAN","20511074","Tulakan"],
+["SMP PGRI TULAKAN","20510963","Tulakan"],
+["SMP NEGERI 1 NGADIROJO","20510937","Ngadirojo"],
+["SMP NEGERI 2 NGADIROJO","20510957","Ngadirojo"],
+["SMP NEGERI 3 NGADIROJO","20510946","Ngadirojo"],
+["SMP NEGERI 4 NGADIROJO SATU ATAP","20540381","Ngadirojo"],
+["SMP NEGERI 5 NGADIROJO SATU ATAP","20557251","Ngadirojo"],
+["SMP MIFTAHUL HUDA","20511072","Ngadirojo"],
+["SMP MUHAMMADIYAH 1 NGADIROJO","20511080","Ngadirojo"],
+["SMP NEGERI 1 SUDIMORO","20510973","Sudimoro"],
+["SMP NEGERI 2 SUDIMORO","20510943","Sudimoro"],
+["SMP NEGERI 3 SUDIMORO","20510953","Sudimoro"],
+["SMP NEGERI 4 SUDIMORO SATU ATAP","20549693","Sudimoro"],
+["SMP NEGERI 5 SUDIMORO SATU ATAP","20570242","Sudimoro"],
+["SMP NEGERI 6 SUDIMORO","69831500","Sudimoro"],
+["SMP NEGERI 1 ARJOSARI","20510961","Arjosari"],
+["SMP NEGERI 2 ARJOSARI","20510972","Arjosari"],
+["SMP NEGERI 3 ARJOSARI SATU ATAP","20549692","Arjosari"],
+["SMP NEGERI 4 ARJOSARI SATU ATAP","20573295","Arjosari"],
+["SMP PGRI ARJOSARI","20511079","Arjosari"]
+];
+
+/* Penyimpanan lokal sederhana (menggantikan bridge widget) */
+var store=(function(){
+  var KEY="ibg-state-br";
+  function load(){try{var s=JSON.parse(localStorage.getItem(KEY));if(s&&typeof s==="object")return s;}catch(e){}return null;}
+  return{
+    getState:function(d){var s=load();return s||d;},
+    setState:function(s){try{localStorage.setItem(KEY,JSON.stringify(s));}catch(e){}}
+  };
+})();
+var TOTAL_Q=10, TIME_PER_Q=30;
+var SHAPES=["kubus","balok","limas","prisma","tabung","kerucut","bola"];
+function defaults(){return{screen:"menu",mode:"campuran",diff:"mudah",qi:0,score:0,streak:0,bestStreak:0,correctCount:0,best:0,q:null,input:"",feedback:null,locked:false,nama:"",kelas:"",sekolah:"",saved:0,menuMsg:null};}
+var S=store.getState(defaults());
+if(S.screen==="game"){S.screen="menu";S.locked=false;S.feedback=null;}
+var timerId=null,timeLeft=TIME_PER_Q,lastKey=null;
+function rnd(n){return Math.floor(Math.random()*n);}
+function ri(lo,hi){return lo+rnd(hi-lo+1);}
+function pick(a){return a[rnd(a.length)];}
+function fmt(n){return String(n);}
+function shuffle(a){var x=a.slice();for(var i=x.length-1;i>0;i--){var j=rnd(i+1);var t=x[i];x[i]=x[j];x[j]=t;}return x;}
+function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function schoolComboHTML(){
+  return '<div class="ibg-dd" id="ibg-sdd">'+
+    '<input id="ibg-sekolah-input" class="ibg-input" type="text" autocomplete="off" placeholder="Ketik untuk cari sekolah..." value="'+esc(S.sekolah)+'">'+
+    '<div id="ibg-sekolah-list" class="ibg-ddlist"></div>'+
+  "</div>";
+}
+function renderSchoolList(q){
+  var list=document.getElementById("ibg-sekolah-list");if(!list)return;
+  var query=(q||"").trim().toLowerCase();
+  var matches=SCHOOLS.filter(function(s){
+    return !query||s[0].toLowerCase().indexOf(query)>=0||s[2].toLowerCase().indexOf(query)>=0;
+  }).slice(0,60);
+  if(!matches.length){list.innerHTML='<div class="ibg-ddempty">Sekolah tidak ditemukan</div>';}
+  else{list.innerHTML=matches.map(function(s){
+    return '<div class="ibg-dditem" data-v="'+esc(s[0])+'"><b>'+esc(s[0])+'</b><span>Kec. '+esc(s[2])+"</span></div>";
+  }).join("");}
+  list.style.display="block";
+}
+function hideSchoolList(){var l=document.getElementById("ibg-sekolah-list");if(l)l.style.display="none";}
+function bindSchoolCombo(){
+  var inp=document.getElementById("ibg-sekolah-input");
+  var list=document.getElementById("ibg-sekolah-list");
+  if(!inp||!list)return;
+  inp.addEventListener("input",function(){renderSchoolList(inp.value);});
+  inp.addEventListener("focus",function(){renderSchoolList(inp.value);});
+  list.addEventListener("click",function(e){
+    var it=e.target.closest(".ibg-dditem");if(!it)return;
+    set({sekolah:it.getAttribute("data-v"),menuMsg:null});
+  });
+}
+function resolveSchool(){
+  var inp=document.getElementById("ibg-sekolah-input");
+  var typed=inp?inp.value.trim():"";
+  if(!typed)return "";
+  var tl=typed.toLowerCase();
+  if(S.sekolah&&S.sekolah.toLowerCase()===tl)return S.sekolah;
+  for(var i=0;i<SCHOOLS.length;i++)if(SCHOOLS[i][0].toLowerCase()===tl)return SCHOOLS[i][0];
+  return "";
+}
+function set(nx){S=Object.assign({},S,nx);store.setState(S);render();manageTimer();}
+function gKubus(d){
+  var s=d==="mudah"?ri(2,9):d==="sedang"?ri(5,15):ri(9,25);
+  var kind=pick(["V","LP","sV","sLP"]);
+  if(kind==="V")return{t:"Volume kubus dengan rusuk "+s+" cm",a:s*s*s,u:"cm³"};
+  if(kind==="LP")return{t:"Luas permukaan kubus dengan rusuk "+s+" cm",a:6*s*s,u:"cm²"};
+  if(kind==="sV")return{t:"Volume sebuah kubus "+(s*s*s)+" cm³. Panjang rusuknya",a:s,u:"cm"};
+  return{t:"Luas permukaan sebuah kubus "+(6*s*s)+" cm². Panjang rusuknya",a:s,u:"cm"};
+}
+function gBalok(d){
+  var p=ri(d==="mudah"?2:4,d==="mudah"?9:d==="sedang"?12:20);
+  var l=ri(2,d==="mudah"?8:12), t=ri(2,d==="mudah"?8:12);
+  var kind=pick(["V","LP","miss"]);
+  var V=p*l*t, LP=2*(p*l+p*t+l*t);
+  if(kind==="V")return{t:"Volume balok "+p+" cm × "+l+" cm × "+t+" cm",a:V,u:"cm³"};
+  if(kind==="LP")return{t:"Luas permukaan balok "+p+" cm × "+l+" cm × "+t+" cm",a:LP,u:"cm²"};
+  var dims=shuffle([[p,"panjang"],[l,"lebar"],[t,"tinggi"]]);
+  var un=dims[0],k1=dims[1],k2=dims[2];
+  return{t:"Volume sebuah balok "+V+" cm³, "+k1[1]+"nya "+k1[0]+" cm, "+k2[1]+"nya "+k2[0]+" cm. "+cap(un[1])+"nya",a:un[0],u:"cm"};
+}
+function gLimas(d){
+  var s=d==="mudah"?ri(3,9):d==="sedang"?ri(6,12):ri(8,15);
+  var t=3*ri(d==="mudah"?1:2,d==="mudah"?4:d==="sedang"?6:10);
+  var kind=pick(["V","LP"]);
+  if(kind==="V")return{t:"Volume limas segiempat beraturan (sisi alas "+s+" cm, tinggi "+t+" cm)",a:s*s*t/3,u:"cm³"};
+  var m=pick([5,10,13,15,17,25]);
+  return{t:"Luas permukaan limas segiempat beraturan (sisi alas "+s+" cm, tinggi sisi tegak "+m+" cm)",a:s*s+2*s*m,u:"cm²"};
+}
+function gPrisma(d){
+  var k=pick(d==="mudah"?[1,2]:d==="sedang"?[2,3,4]:[3,4,5]);
+  var a=3*k, ts=4*k, hyp=5*k;
+  var tp=ri(d==="mudah"?5:8,d==="mudah"?12:d==="sedang"?20:30);
+  var La=a*ts/2, K=a+ts+hyp;
+  var kind=pick(["V","LP"]);
+  if(kind==="V")return{t:"Volume prisma segitiga (alas segitiga "+a+" cm, tinggi segitiga "+ts+" cm, panjang prisma "+tp+" cm)",a:La*tp,u:"cm³"};
+  return{t:"Luas permukaan prisma segitiga siku-siku ("+a+", "+ts+", "+hyp+" cm) dengan panjang "+tp+" cm",a:2*La+K*tp,u:"cm²"};
+}
+function gTabung(d){
+  var r=pick(d==="mudah"?[7,14]:d==="sedang"?[7,14,21]:[14,21,28]);
+  var t=ri(d==="mudah"?5:8,d==="mudah"?15:d==="sedang"?25:40);
+  var kind=pick(["V","LP"]);
+  if(kind==="V")return{t:"Volume tabung (r = "+r+" cm, t = "+t+" cm, π = 22/7)",a:22*r*r*t/7,u:"cm³"};
+  return{t:"Luas permukaan tabung (r = "+r+" cm, t = "+t+" cm, π = 22/7)",a:2*22*r*(r+t)/7,u:"cm²"};
+}
+function gKerucut(d){
+  var r=pick([7,14]);
+  var t=3*ri(d==="mudah"?2:3,d==="mudah"?6:d==="sedang"?8:12);
+  var kind=pick(["V","LP"]);
+  if(kind==="V")return{t:"Volume kerucut (r = "+r+" cm, t = "+t+" cm, π = 22/7)",a:22*r*r*t/21,u:"cm³"};
+  var s=pick([15,25]);
+  return{t:"Luas permukaan kerucut (r = "+r+" cm, garis pelukis "+s+" cm, π = 22/7)",a:22*r*(r+s)/7,u:"cm²"};
+}
+function gBola(d){
+  var kind=(d==="mudah")?"LP":pick(["LP","V"]);
+  if(kind==="LP"){var r=pick([7,14]);return{t:"Luas permukaan bola (r = "+r+" cm, π = 22/7)",a:4*22*r*r/7,u:"cm²"};}
+  return{t:"Volume bola (r = 21 cm, π = 22/7)",a:4*22*21*21*21/21,u:"cm³"};
+}
+function genQ(){
+  var m=S.mode==="campuran"?pick(SHAPES):S.mode;
+  var d=S.diff,q;
+  if(m==="kubus")q=gKubus(d);
+  else if(m==="balok")q=gBalok(d);
+  else if(m==="limas")q=gLimas(d);
+  else if(m==="prisma")q=gPrisma(d);
+  else if(m==="tabung")q=gTabung(d);
+  else if(m==="kerucut")q=gKerucut(d);
+  else q=gBola(d);
+  return{txt:q.t+" = ",ans:q.a,unit:q.u};
+}
+function startGame(nama,kelas,sekolah){set({screen:"game",qi:0,score:0,streak:0,bestStreak:0,correctCount:0,q:genQ(),input:"",feedback:null,locked:false,nama:nama,kelas:kelas,sekolah:sekolah,saved:0,menuMsg:null});}
+function nextQ(){
+  if(S.qi+1>=TOTAL_Q){finishGame();return;}
+  set({qi:S.qi+1,q:genQ(),input:"",feedback:null,locked:false});
+}
+function finishGame(){
+  set({screen:"result",best:Math.max(S.best,S.score),locked:false,feedback:null,saved:FB?1:3});
+  if(FB)saveScore();
+}
+function saveScore(){
+  var nama=S.nama,kelas=S.kelas,sekolah=S.sekolah,score=S.score,cc=S.correctCount,bs=S.bestStreak,mode=S.mode,diff=S.diff;
+  var acc=Math.round(cc/TOTAL_Q*100);
+  try{
+    FB.collection(SCORE_COLLECTION).add({
+      nama:nama,kelas:kelas,sekolah:sekolah,skor:score,benar:cc,total:TOTAL_Q,akurasi:acc,
+      mode:mode,kesulitan:diff,streakTerbaik:bs,
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    }).then(function(){if(S.screen==="result")set({saved:2});})
+     .catch(function(){if(S.screen==="result")set({saved:3});});
+  }catch(e){if(S.screen==="result")set({saved:3});}
+}
+function stopTimer(){if(timerId){clearInterval(timerId);timerId=null;}}
+function startTimer(){
+  updateTimerUI();
+  timerId=setInterval(function(){
+    timeLeft=Math.max(0,timeLeft-0.1);
+    updateTimerUI();
+    if(timeLeft<=0)onTimeout();
+  },100);
+}
+function updateTimerUI(){
+  var bar=document.getElementById("ibg-timerbar"),txt=document.getElementById("ibg-timertxt");
+  if(bar){bar.style.width=(timeLeft/TIME_PER_Q*100)+"%";bar.style.background=timeLeft<=5?"var(--ibg-bad)":"var(--hatch-widget-accent)";}
+  if(txt)txt.textContent=Math.ceil(timeLeft)+" dtk";
+}
+function manageTimer(){
+  var active=S.screen==="game"&&S.q&&!S.locked;
+  var key=active?("q"+S.qi):null;
+  if(key!==lastKey){lastKey=key;stopTimer();if(active){timeLeft=TIME_PER_Q;startTimer();}}
+  if(!active)stopTimer();
+}
+function eqLine(q){return q.txt+q.ans+" "+q.unit;}
+function submit(){
+  if(S.screen!=="game"||S.locked||!S.q)return;
+  var raw=S.input;
+  if(raw===""||raw==="-"){set({feedback:{ok:null,text:"Ketik jawabanmu dulu ya!"}});return;}
+  var val=parseInt(raw,10),ok=val===S.q.ans;
+  var score=S.score,streak=S.streak,bestStreak=S.bestStreak,cc=S.correctCount,msg;
+  if(ok){streak++;bestStreak=Math.max(bestStreak,streak);var pts=10+(streak-1)*2;score+=pts;cc++;msg={ok:true,text:pick(["Benar!","Tepat sekali!","Hebat!","Luar biasa!"])+" +"+pts+" poin"};}
+  else{streak=0;msg={ok:false,text:"Kurang tepat. "+eqLine(S.q)};}
+  stopTimer();
+  set({score:score,streak:streak,bestStreak:bestStreak,correctCount:cc,feedback:msg,locked:true});
+  setTimeout(function(){if(S.screen==="game")nextQ();},1700);
+}
+function onTimeout(){
+  if(S.screen!=="game"||S.locked||!S.q)return;
+  stopTimer();
+  set({streak:0,locked:true,feedback:{ok:false,text:"Waktu habis! "+eqLine(S.q)}});
+  setTimeout(function(){if(S.screen==="game")nextQ();},1900);
+}
+function keyPress(k){
+  if(S.screen!=="game"||S.locked)return;
+  var inp=S.input;
+  if(k==="back")inp=inp.slice(0,-1);
+  else if(k==="neg")inp=inp.charAt(0)==="-"?inp.slice(1):"-"+inp;
+  else{if(inp.replace("-","").length>=5)return;inp+=k;}
+  set({input:inp,feedback:null});
+}
+function menuHTML(){
+  var modes=[["campuran","Campuran"],["kubus","Kubus"],["balok","Balok"],["limas","Limas"],["prisma","Prisma"],["tabung","Tabung"],["kerucut","Kerucut"],["bola","Bola"]];
+  var diffs=[["mudah","Mudah"],["sedang","Sedang"],["sulit","Sulit"]];
+  var h='<h2 class="ibg-title">Bangun Ruang</h2><p class="ibg-sub">Game latihan bangun ruang untuk anak SMP.<br>10 soal &bull; 30 detik per soal &bull; hitung volume &amp; luas permukaan!</p>';
+  h+='<div class="ibg-label">Nama Siswa</div><input id="ibg-nama" class="ibg-input" type="text" maxlength="30" placeholder="Tulis namamu..." value="'+esc(S.nama)+'">';
+  h+='<div class="ibg-label">Kelas</div><input id="ibg-kelas" class="ibg-input" type="text" maxlength="20" placeholder="Contoh: 7A" value="'+esc(S.kelas)+'">';
+  h+='<div class="ibg-label">Nama Sekolah</div>'+schoolComboHTML();
+  h+='<div class="ibg-label">Pilih Bangun</div><div class="ibg-row">';
+  h+=modes.map(function(m){return '<button class="ibg-opt'+(S.mode===m[0]?" sel":"")+'" data-act="mode" data-v="'+m[0]+'">'+m[1]+"</button>";}).join("");
+  h+='</div><div class="ibg-label">Tingkat Kesulitan</div><div class="ibg-row">';
+  h+=diffs.map(function(d){return '<button class="ibg-opt'+(S.diff===d[0]?" sel":"")+'" data-act="diff" data-v="'+d[0]+'">'+d[1]+"</button>";}).join("");
+  h+='</div><button class="ibg-btn" data-act="start">Mulai Bermain</button>';
+  if(S.menuMsg)h+='<div class="ibg-menu-msg">'+esc(S.menuMsg)+"</div>";
+  else h+='<div class="ibg-menu-msg"></div>';
+  h+='<p class="ibg-credit">Dibuat oleh MGMP Matematika SMP Kabupaten Pacitan</p>';
+  if(S.best>0)h+='<p class="ibg-sub" style="margin:12px 0 0">Skor terbaikmu: <b>'+S.best+"</b></p>";
+  return h;
+}
+function gameHTML(){
+  var q=S.q,prog=(S.qi/TOTAL_Q*100);
+  var h='<div class="ibg-top"><span>Soal '+(S.qi+1)+" / "+TOTAL_Q+'</span><span class="ibg-score">Skor: '+S.score+"</span></div>";
+  h+='<div class="ibg-pbar"><div class="ibg-pfill" style="width:'+prog+'%"></div></div>';
+  h+='<div class="ibg-top" style="margin-top:10px"><span id="ibg-timertxt">30 dtk</span>';
+  if(S.streak>=2)h+='<span class="ibg-streak">Streak &times;'+S.streak+"</span>";
+  h+="</div>";
+  h+='<div class="ibg-tbar"><div class="ibg-tfill" id="ibg-timerbar"></div></div>';
+  h+='<div class="ibg-q'+(S.locked?" dim":"")+'" style="font-size:18px;line-height:1.5">'+esc(q.txt)+'<span style="color:var(--hatch-widget-accent)">?</span></div>';
+  var disp=S.input===""?"&nbsp;":esc(S.input);
+  h+='<div class="ibg-ans">'+disp+' <span style="font-size:14px;color:var(--hatch-widget-muted)">'+esc(q.unit)+"</span></div>";
+  var keys=[["1","1"],["2","2"],["3","3"],["4","4"],["5","5"],["6","6"],["7","7"],["8","8"],["9","9"],["00","00"],["0","0"],["back","\u232B"]];
+  h+='<div class="ibg-pad">';
+  h+=keys.map(function(k){return '<button class="ibg-key" data-act="key" data-v="'+k[0]+'">'+k[1]+"</button>";}).join("");
+  h+="</div>";
+  h+='<button class="ibg-btn" data-act="submit" style="margin-top:10px">Jawab</button>';
+  if(S.feedback){var c=S.feedback.ok===true?"ok":(S.feedback.ok===false?"no":"hint");h+='<div class="ibg-feed '+c+'">'+esc(S.feedback.text)+"</div>";}
+  else h+='<div class="ibg-feed"></div>';
+  return h;
+}
+function saveStatHTML(){
+  if(S.saved===2)return '<p class="ibg-savestat ok">✅ Nilai tersimpan di database</p>';
+  if(S.saved===1)return '<p class="ibg-savestat wait">⏳ Menyimpan nilai...</p>';
+  return '<p class="ibg-savestat fail">⚠️ Nilai tidak tersimpan (periksa koneksi)</p>';
+}
+function resultHTML(){
+  var acc=Math.round(S.correctCount/TOTAL_Q*100),msg;
+  if(acc>=90)msg="Luar biasa! Kamu master bangun ruang!";
+  else if(acc>=70)msg="Hebat! Sedikit lagi sempurna.";
+  else if(acc>=50)msg="Bagus! Terus berlatih ya.";
+  else msg="Jangan menyerah, coba lagi yuk!";
+  var h='<h2 class="ibg-title">Selesai!</h2><p class="ibg-msg">'+msg+"</p>";
+  h+='<div class="ibg-namecard">👤 '+esc(S.nama)+" &bull; Kelas "+esc(S.kelas)+'<br><span style="font-size:12px;font-weight:600;color:var(--hatch-widget-muted)">'+esc(S.sekolah)+"</span></div>";
+  h+=saveStatHTML();
+  h+='<div class="ibg-big">'+S.score+"</div>";
+  h+='<div class="ibg-stats">';
+  h+='<div class="ibg-stat"><b>'+S.correctCount+"/"+TOTAL_Q+'</b><span>Jawaban benar</span></div>';
+  h+='<div class="ibg-stat"><b>'+acc+'%</b><span>Akurasi</span></div>';
+  h+='<div class="ibg-stat"><b>&times;'+S.bestStreak+'</b><span>Streak terbaik</span></div>';
+  h+='<div class="ibg-stat"><b>'+S.best+'</b><span>Skor terbaik</span></div>';
+  h+="</div>";
+  h+='<button class="ibg-btn" data-act="again">Main Lagi</button>';
+  h+='<button class="ibg-btn ghost" data-act="menu">Ganti Mode / Kesulitan</button>';
+  return h;
+}
+function render(){
+  var body=document.getElementById("ibg-body");
+  if(S.screen==="menu"){body.innerHTML=menuHTML();bindSchoolCombo();}
+  else if(S.screen==="game")body.innerHTML=gameHTML();
+  else body.innerHTML=resultHTML();
+}
+document.addEventListener("click",function(e){
+  if(!e.target.closest("#ibg-sdd"))hideSchoolList();
+});
+document.getElementById("ibg-body").addEventListener("click",function(e){
+  var el=e.target.closest("[data-act]");if(!el)return;
+  var act=el.getAttribute("data-act"),v=el.getAttribute("data-v");
+  if(act==="mode")set({mode:v});
+  else if(act==="diff")set({diff:v});
+  else if(act==="start"){
+    var nm=document.getElementById("ibg-nama").value.trim();
+    var kl=document.getElementById("ibg-kelas").value.trim();
+    var sk=resolveSchool();
+    if(!nm||!kl||!sk){set({menuMsg:"Isi nama, kelas, dan pilih sekolah dari daftar ya!"});return;}
+    startGame(nm,kl,sk);
+  }
+  else if(act==="key")keyPress(v);
+  else if(act==="submit")submit();
+  else if(act==="again")startGame(S.nama,S.kelas,S.sekolah);
+  else if(act==="menu")set({screen:"menu",locked:false,feedback:null,menuMsg:null});
+});
+document.addEventListener("keydown",function(e){
+  if(S.screen!=="game"||S.locked)return;
+  if(/^[0-9]$/.test(e.key))keyPress(e.key);
+  else if(e.key==="Backspace")keyPress("back");
+  else if(e.key==="Enter")submit();
+});
+render();manageTimer();
+})();
+</script>
+</body>
+</html>
